@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ shelf.shelf_name }} - Bookex Chelf</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <a href="/dashboard" class="back-btn" aria-label="Go back">←</a>
+    <div class="logo">
+      <img src="{{ url_for('static', filename='image/logo.png') }}" alt="BookExChelf" class = "logo">
+    </div>
+    <div class="auth-buttons">
+      <a href="/logout" class="btn ghost">Log Out</a>
+      <a href="/profile" class="btn primary profile-btn" title="{{ session.get('user_name', 'Profile') }}">
+        {{ session.get('user_name', 'U')[0].upper() }}
+        {% if is_premium %}
+        <span class="premium-badge" title="Premium Member"><span class="premium-badge-crown">👑</span></span>
+        {% endif %}
+      </a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <main class="container">
+    <h1 class="headline">
+      <span>{{ shelf.shelf_name }}</span>
+    </h1>
+
+    <p class="subtitle">
+      Books in this shelf
+    </p>
+  </main>
+
+  <!-- View Collection Button -->
+  <div class="active-reading-section">
+    <a href="{{ url_for('collection_books', shelf_id=shelf.id) }}" class="active-reading-btn">📚 View Collection</a>
+  </div>
+
+  <!-- Dynamic book buttons -->
+  <section class="shelf-container">
+    {% for book in books %}
+      <div class="dashboard-shelf shelf green" data-url="{{ url_for('book_page', book_id=book.id) }}" data-id="{{ book.id }}">
+          <span class="shelf-text">{{ book.book_name }}</span>
+          <div class="shelf-actions">
+              <button class="start-reading-btn" data-book-id="{{ book.id }}">📖</button>
+              <button class="move-shelf-btn" data-book-id="{{ book.id }}" title="Move to Shelf">📁</button>
+              <button class="delete-btn" data-book-id="{{book.id}}">🗑</button>
+          </div>
+      </div>
+    {% else %}
+      <p>No books yet</p>
+    {% endfor %}
+  </section>
+
+  <!-- Modal for moving books between shelves -->
+<div id="moveShelfModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Move Book to Shelf</h2>
+      <button class="modal-close" id="closeModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="bookTitleInModal"></p>
+      <div id="shelfList" class="shelf-list">
+        <!-- Shelves will be populated here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+  <!-- Error message for book limit -->
+  {% if error %}
+    <div style="background: #ffebee; border-left: 4px solid #f44336; padding: 15px 20px; margin: 20px 24px; border-radius: 4px;">
+      <p style="color: #c62828; margin: 0; font-weight: 600;">⚠️ {{ error }}</p>
+      <p style="color: #c62828; margin: 8px 0 0 0; font-size: 14px;">
+        <a href="/pricing" style="color: #c62828; text-decoration: underline; font-weight: 600;">Upgrade to Premium</a> to add unlimited books
+      </p>
+    </div>
+  {% endif %}
+
+  <!-- Create Book Form -->
+  <form method="POST" class="create-form">
+      <input type="text" name="book_name" required>
+      <button class="create-shelf" type="submit">Add Book</button>
+  </form>
+
+
+
+
+
+  <!-- READING TIMER -->
+<aside class="reading-timer">
+  <h2>⏱ Reading Timer</h2>
+
+  <div class="timer-display" id="timerDisplay">25:00</div>
+
+
+  <div class="timer-input">
+    <label for="minutes">Set Minutes</label>
+    <input type="number" id="minutes" min="1" max="180" value="25">
+  </div>
+
+  <div class="timer-controls">
+    <button id="startTimer">Start</button>
+    <button id="pauseTimer">Pause</button>
+    <button id="resetTimer">Reset</button>
+  </div>
+</aside>
+
+
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-section">
+      <h4>About Bookex Chelf</h4>
+      <p>Your personal reading companion to track, organize, and manage your reading habits.</p>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/logout">Log Out</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Information</h4>
+      <ul>
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Terms of Service</a></li>
+        <li><a href="mailto:bookexshelf@gmail.com">Contact Us</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Connect With Us</h4>
+      <ul>
+        <li><a href="https://www.reddit.com/r/BookExChelf/">Reddit</a></li>
+        <li><a href="https://whatsapp.com/channel/0029VbCJaZM1t90fKSEfHN1v">Whatsapp</a></li>
+        <li><a href="https://www.instagram.com/bookex_chelf/">Instagram</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>&copy; 2026 Bookex Chelf. All rights reserved.</p>
+  </div>
+</footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const books = document.querySelectorAll('.dashboard-shelf');
+    let longPressTimer;
+    let isLongPress = false;
+
+    books.forEach(book => {
+        // Long press event
+        book.addEventListener('mousedown', function(e) {
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                showBookActions(this);
+            }, 500); // 500ms long press
+        });
+
+        // Mouse up event
+        book.addEventListener('mouseup', function(e) {
+            clearTimeout(longPressTimer);
+            // If not a long press, redirect (but not if clicking buttons or shelf-actions)
+            if (!isLongPress && !e.target.closest('.shelf-actions')) {
+                const url = this.dataset.url;
+                if (url) {
+                    window.location.href = url;
+                }
+            }
+        });
+
+        // Mouse leave event
+        book.addEventListener('mouseleave', function() {
+            clearTimeout(longPressTimer);
+        });
+
+        // Touch events for mobile
+        book.addEventListener('touchstart', function(e) {
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                showBookActions(this);
+            }, 500);
+        });
+
+        book.addEventListener('touchend', function() {
+            clearTimeout(longPressTimer);
+        });
+
+        // Start reading button click
+        const startReadingBtn = book.querySelector('.start-reading-btn');
+        if (startReadingBtn) {
+            startReadingBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const bookId = startReadingBtn.getAttribute('data-book-id');
+                try {
+                    const response = await fetch(`/start_reading/${bookId}`, {
+                        method: 'POST'
+                    });
+                    if (response.ok) {
+                        window.location.href = '/active_reading';
+                    } else {
+                        alert('Failed to start reading');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while starting to read');
+                }
+            });
+        }
+
+        // Delete button click
+        const deleteBtn = book.querySelector('.delete-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const bookId = this.getAttribute('data-book-id');
+                if (confirm('Are you sure you want to delete this book?')) {
+                    deleteBook(bookId);
+                }
+            });
+        }
+    });
+
+    function showBookActions(book) {
+        // Hide all other books' actions
+        books.forEach(b => {
+            if (b !== book) {
+                b.classList.remove('active');
+            }
+        });
+        // Toggle current book's actions
+        book.classList.toggle('active');
+    }
+
+    // Hide actions when clicking elsewhere
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dashboard-shelf')) {
+            books.forEach(book => {
+                book.classList.remove('active');
+            });
+        }
+    });
+
+    // Delete book function
+    async function deleteBook(bookId) {
+        try {
+            const response = await fetch('/delete_book', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: bookId
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to delete book: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the book.');
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const moveShelfBtns = document.querySelectorAll('.move-shelf-btn');
+    const modal = document.getElementById('moveShelfModal');
+    const closeModalBtn = document.getElementById('closeModal');
+    let currentBookId = null;
+    let currentShelfId = {{ shelf.id }};
+
+    // Open modal when move shelf button is clicked
+    moveShelfBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            currentBookId = this.getAttribute('data-book-id');
+            const bookElement = this.closest('.dashboard-shelf');
+            const bookTitle = bookElement.querySelector('.shelf-text').textContent;
+            
+            document.getElementById('bookTitleInModal').textContent = `Move "${bookTitle}" to:`;
+            
+            // Fetch available shelves
+            fetchShelves(currentBookId);
+            modal.style.display = 'flex';
+        });
+    });
+
+    // Close modal
+    closeModalBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+    });
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    // Fetch all shelves for current user
+    function fetchShelves(bookId) {
+        fetch('/get-user-shelves', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayShelves(data.shelves, currentShelfId, bookId);
+            } else {
+                alert('Error loading shelves');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading shelves');
+        });
+    }
+
+    // Display shelves as clickable options
+    function displayShelves(shelves, currentShelfId, bookId) {
+        const shelfList = document.getElementById('shelfList');
+        shelfList.innerHTML = '';
+
+        shelves.forEach(shelf => {
+            const shelfOption = document.createElement('div');
+            shelfOption.className = 'shelf-option';
+            
+            if (shelf.id === currentShelfId) {
+                shelfOption.classList.add('current');
+                shelfOption.style.pointerEvents = 'none';
+                shelfOption.style.opacity = '0.6';
+            }
+
+            shelfOption.innerHTML = `
+                <div>
+                    <div class="shelf-option-name">${shelf.shelf_name}</div>
+                    <div class="shelf-option-count">${shelf.book_count} books</div>
+                </div>
+            `;
+
+            shelfOption.addEventListener('click', function() {
+                if (shelf.id !== currentShelfId) {
+                    moveBookToShelf(bookId, shelf.id, shelf.shelf_name);
+                }
+            });
+
+            shelfList.appendChild(shelfOption);
+        });
+    }
+
+    // Move book to selected shelf
+    function moveBookToShelf(bookId, newShelfId, shelfName) {
+        fetch('/move-book-to-shelf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                book_id: bookId,
+                new_shelf_id: newShelfId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Book moved to "${shelfName}" successfully!`);
+                modal.style.display = 'none';
+                // Reload page to reflect changes
+                location.reload();
+            } else {
+                alert('Error moving book: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error moving book');
+        });
+    }
+});
+</script>
+</body>
+
+</html>
+
+
+

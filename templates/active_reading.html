@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Active Reading - Bookex Chelf</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <a href="javascript:history.back()" class="back-btn" aria-label="Go back">←</a>
+    <div class="logo">
+      <img src="{{ url_for('static', filename='image/logo.png') }}" alt="BookExChelf" class = "logo">
+    </div>
+    <div class="auth-buttons">
+      {% if session.get('user_id') %}
+        <a href="/logout" class="btn ghost">Log Out</a>
+        <a href="/profile" class="btn primary profile-btn" title="{{ session.get('user_name', 'Profile') }}">
+          {{ session.get('user_name', 'U')[0].upper() }}
+          {% if is_premium %}
+          <span class="premium-badge" title="Premium Member"><span class="premium-badge-crown">👑</span></span>
+          {% endif %}
+        </a>
+      {% else %}
+        <a href="/signin" class="btn ghost">Sign In</a>
+        <a href="/signup" class="btn primary">Sign Up</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <main class="container">
+    <h1 class="headline">
+      <span>Active Reading</span>
+    </h1>
+
+    <p class="subtitle">
+      Books you're currently reading
+    </p>
+  </main>
+
+  <!-- Add Book Form -->
+  <form method="POST" class="create-form" style="margin: 20px 24px;">
+    <input type="text" name="book_name" required placeholder="Add a new book to your active reading...">
+    <button class="create-shelf" type="submit">Add Book</button>
+  </form>
+
+  <!-- Error message for book limit -->
+  {% if error %}
+    <div style="background: #ffebee; border-left: 4px solid #f44336; padding: 15px 20px; margin: 20px 24px; border-radius: 4px;">
+      <p style="color: #c62828; margin: 0; font-weight: 600;">⚠️ {{ error }}</p>
+      <p style="color: #c62828; margin: 8px 0 0 0; font-size: 14px;">
+        <a href="/pricing" style="color: #c62828; text-decoration: underline; font-weight: 600;">Upgrade to Premium</a> to add unlimited books
+      </p>
+    </div>
+  {% endif %}
+
+<!-- View Active Reading Collection -->
+<div class="active-reading-section">
+  <a href="{{ url_for('view_active_reading') }}" class="active-reading-btn">
+    📚 View Active Reading
+  </a>
+</div>
+
+
+<!-- Active Reading Books -->
+ <section class="shelf-container">
+  {% for book in active_books %}
+    <div class="dashboard-shelf shelf green" data-id="{{ book.id }}" data-type="book" data-url="{{ url_for('book_page', book_id=book.id) }}">
+      <span class="shelf-text">{{ book.book_name }}</span>
+      <div class="shelf-actions">
+        <button class="stop-reading-btn" data-book-id="{{ book.id }}">🔁</button>
+        <button class="delete-btn" data-book-id="{{ book.id }}">🗑</button>
+      </div>
+    </div>
+  {% else %}
+    <p>No active books yet</p>
+  {% endfor %}
+ </section>
+
+
+
+
+
+<!-- Enhanced Daily Goals Section for active_reading.html -->
+<!-- Replace the existing daily-goals-box section with this -->
+
+<aside class="daily-goals-box">
+  <!-- Fixed Header with Progress Bar -->
+  <div class="daily-goals-header">
+    <h2>📚 Today's Reading Goals</h2>
+    <div class="goals-summary">
+      <span class="summary-text">
+        {{ daily_goal_books|length }} goals • 
+        {{ progress.today_completed_count }}/{{ progress.today_goal_count }} completed
+        <span class="completion-badge">{{ ((progress.today_completed_count / progress.today_goal_count * 100) if progress.today_goal_count > 0 else 0)|int }}%</span>
+      </span>
+    </div>
+    <!-- Progress Bar -->
+    <div class="goals-progress-container">
+      <div class="goals-progress-bar" style="width: {{ ((progress.today_completed_count / progress.today_goal_count * 100) if progress.today_goal_count > 0 else 0)|int }}%"></div>
+    </div>
+  </div>
+
+  <!-- Scrollable Goals Area -->
+  <div class="goals-scroll-container">
+    {% if daily_goal_books|length > 0 %}
+      <table class="daily-goals-table">
+        <tbody>
+          {% for goal in daily_goal_books %}
+            {% if goal.pages_to_read > 0 %}
+              <tr class="goal-item {% if progress and progress.today_tasks and progress.today_tasks[loop.index0] %}completed-goal{% endif %}" style="position: relative;">
+                <td style="width: 40px;">
+                  <input
+                    type="checkbox"
+                    class="goal-checkbox"
+                    id="goal-{{ loop.index0 }}"
+                    data-index="{{ loop.index0 }}"
+                    {% if progress and progress.today_tasks and progress.today_tasks[loop.index0] %}checked{% endif %}
+                    onchange="toggleGoal(this)"
+                  >
+                </td>
+                <td>
+                  <label for="goal-{{ loop.index0 }}" class="goal-title">
+                    {{ goal.title[:35] }}{% if goal.title|length > 35 %}...{% endif %}
+                  </label>
+                  <div class="goal-meta">
+                    Pages {{ goal.start_page }} - {{ goal.end_page }}
+                  </div>
+                </td>
+                <td style="text-align: right; width: 100px;">
+                  <span class="goal-pages">
+                    {{ goal.pages_to_read|round(0)|int }} pages
+                  </span>
+                </td>
+              </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-goals-scroll">
+        <div class="empty-goals">
+          <div class="empty-goals-icon">📖</div>
+          <p>No reading goals for today</p>
+          <p class="empty-goals-hint">Add books with target dates to generate daily goals</p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Fixed Bottom Strike Counter -->
+  <div class="strike-counter-container">
+    <div class="strike-counter">
+      <div class="streak-stats">
+        <div class="streak-item">
+          <div class="streak-icon">🔥</div>
+          <div class="streak-info">
+            <div class="streak-label">Current Streak</div>
+            <div class="streak-value">{{ progress.current_strike }} days</div>
+          </div>
+        </div>
+        <div class="streak-divider"></div>
+        <div class="streak-item">
+          <div class="streak-icon">🏆</div>
+          <div class="streak-info">
+            <div class="streak-label">Best Streak</div>
+            <div class="streak-value">{{ progress.highest_strike }} days</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Additional Stats (Optional) -->
+      <div class="streak-additional-stats">
+        <div class="stat-item">
+          <span class="stat-label">Completion Rate:</span>
+          <span class="stat-value">
+            {{ ((progress.total_goals_completed / progress.total_goals_attempted * 100) if progress.total_goals_attempted > 0 else 0)|int }}%
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Add this CSS to your style.css -->
+<style>
+  .daily-goals-box {
+    position: fixed;
+    right: 20px;
+    top: 100px;
+    width: 400px;
+    max-height: calc(100vh - 120px);
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .daily-goals-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+
+  .daily-goals-header h2 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+  }
+
+  .goals-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .summary-text {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+
+  .completion-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 8px;
+  }
+
+  .goals-progress-container {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .goals-progress-bar {
+    height: 100%;
+    background: white;
+    transition: width 0.5s ease;
+    border-radius: 2px;
+  }
+
+  .goals-scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .daily-goals-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .goal-item {
+    border-bottom: 1px solid #f0f0f0;
+    transition: all 0.3s ease;
+  }
+
+  .goal-item:hover {
+    background: #f9f9f9;
+  }
+
+  .goal-item td {
+    padding: 15px 10px;
+    vertical-align: top;
+  }
+
+  .goal-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
+  }
+
+  .goal-title {
+    display: block;
+    font-weight: 500;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    margin-bottom: 4px;
+  }
+
+  .goal-meta {
+    font-size: 12px;
+    color: #666;
+  }
+
+  .goal-pages {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #f0f0f0;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+  }
+
+  .completed-goal {
+    opacity: 0.6;
+  }
+
+  .completed-goal .goal-title {
+    text-decoration: line-through;
+    color: #999;
+  }
+
+  .completed-goal .goal-pages {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .empty-goals-scroll {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+
+  .empty-goals {
+    text-align: center;
+    padding: 20px;
+  }
+
+  .empty-goals-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+  }
+
+  .empty-goals-hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+  }
+
+  .strike-counter-container {
+    border-top: 1px solid #eee;
+    padding: 20px;
+    background: #f9f9f9;
+  }
+
+  .streak-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .streak-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .streak-icon {
+    font-size: 32px;
+  }
+
+  .streak-info {
+    flex: 1;
+  }
+
+  .streak-label {
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .streak-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .streak-divider {
+    width: 1px;
+    height: 40px;
+    background: #ddd;
+  }
+
+  .streak-additional-stats {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .stat-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+
+  .stat-label {
+    color: #666;
+  }
+
+  .stat-value {
+    font-weight: 600;
+    color: #667eea;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .daily-goals-box {
+      position: static;
+      width: 100%;
+      margin: 20px auto;
+      max-height: none;
+    }
+  }
+</style>
+
+
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-section">
+      <h4>About Bookex Chelf</h4>
+      <p>Your personal reading companion to track, organize, and manage your reading habits.</p>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/logout">Log Out</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Information</h4>
+      <ul>
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Terms of Service</a></li>
+        <li><a href="mailto:bookexshelf@gmail.com">Contact Us</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Connect With Us</h4>
+      <ul>
+        <li><a href="https://www.reddit.com/r/BookExChelf/">Reddit</a></li>
+        <li><a href="https://whatsapp.com/channel/0029VbCJaZM1t90fKSEfHN1v">Whatsapp</a></li>
+        <li><a href="https://www.instagram.com/bookex_chelf/">Instagram</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>&copy; 2026 Bookex Chelf. All rights reserved.</p>
+  </div>
+</footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle long press for active books
+    const activeBooks = document.querySelectorAll('.dashboard-shelf');
+    let longPressTimer;
+    let isLongPress = false;
+
+    activeBooks.forEach(book => {
+      // Long press event
+      book.addEventListener('mousedown', function(e) {
+        isLongPress = false;
+        longPressTimer = setTimeout(() => {
+          isLongPress = true;
+          showBookActions(this);
+        }, 500);
+      });
+
+      // Mouse up event
+      book.addEventListener('mouseup', function(e) {
+        clearTimeout(longPressTimer);
+        // If not a long press, redirect
+        if (!isLongPress && !e.target.closest('.shelf-actions')) {
+          const url = this.dataset.url;
+          if (url) {
+            window.location.href = url;
+          }
+        }
+      });
+
+      // Mouse leave event
+      book.addEventListener('mouseleave', function() {
+        clearTimeout(longPressTimer);
+      });
+
+      // Touch events for mobile
+      book.addEventListener('touchstart', function(e) {
+        isLongPress = false;
+        longPressTimer = setTimeout(() => {
+          isLongPress = true;
+          showBookActions(this);
+        }, 500);
+      });
+
+      book.addEventListener('touchend', function() {
+        clearTimeout(longPressTimer);
+      });
+
+      // Stop reading button
+      const stopReadingBtn = book.querySelector('.stop-reading-btn');
+      if (stopReadingBtn) {
+        stopReadingBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const bookId = stopReadingBtn.getAttribute('data-book-id');
+          try {
+            const response = await fetch(`/stop_reading/${bookId}`, {
+              method: 'POST'
+            });
+            if (response.ok) {
+              location.reload();
+            } else {
+              alert('Failed to stop reading');
+            }
+          } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while stopping reading');
+          }
+        });
+      }
+
+      // Delete button
+      const deleteBtn = book.querySelector('.delete-btn');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const bookId = this.getAttribute('data-book-id');
+          if (confirm('Are you sure you want to delete this book?')) {
+            deleteBook(bookId);
+          }
+        });
+      }
+    });
+
+    function showBookActions(book) {
+      activeBooks.forEach(b => {
+        if (b !== book) {
+          b.classList.remove('active');
+        }
+      });
+      book.classList.toggle('active');
+    }
+
+    // Hide actions when clicking elsewhere
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.dashboard-shelf')) {
+        activeBooks.forEach(book => {
+          book.classList.remove('active');
+        });
+      }
+    });
+  });
+
+  // Delete book function
+  async function deleteBook(bookId) {
+    try {
+      const response = await fetch('/delete_book', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: bookId
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Failed to delete book: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred while deleting the book.');
+    }
+  }
+
+</script>
+</body>
+
+</html>

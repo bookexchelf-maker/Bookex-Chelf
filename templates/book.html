@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ book.book_name }} - Bookex Chelf</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+      /* Premium feature styles */
+      .premium-feature {
+        position: relative;
+      }
+
+      .premium-feature.locked input[type="file"] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .premium-lock-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-left: 8px;
+        margin-top: 8px;
+      }
+
+      .premium-message {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe699 100%);
+        border: 2px solid #ffc107;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+        color: #856404;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .premium-message a {
+        color: #667eea;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 8px;
+        padding: 6px 12px;
+        background: white;
+        border-radius: 6px;
+        transition: all 0.3s;
+      }
+
+      .premium-message a:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      .error-banner {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%);
+        border: 2px solid #f5c6cb;
+        color: #721c24;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+        font-weight: 500;
+        font-size: 15px;
+      }
+
+      .error-banner.show {
+        display: block;
+        animation: slideDown 0.3s ease-out;
+      }
+
+      .success-banner {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 2px solid #c3e6cb;
+        color: #155724;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+        font-weight: 500;
+        font-size: 15px;
+      }
+
+      .success-banner.show {
+        display: block;
+        animation: slideDown 0.3s ease-out;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .file-info {
+        color: #667eea;
+        font-size: 13px;
+        margin-top: 8px;
+        padding: 8px;
+        background: #f0f4ff;
+        border-radius: 6px;
+      }
+
+      .file-info a {
+        color: #667eea;
+        font-weight: 600;
+        text-decoration: underline;
+      }
+
+      .file-info a:hover {
+        color: #764ba2;
+      }
+
+      .link-info {
+        color: #667eea;
+        font-size: 13px;
+        margin-top: 8px;
+        padding: 8px;
+        background: #f0f4ff;
+        border-radius: 6px;
+      }
+
+      .link-info a {
+        color: #667eea;
+        font-weight: 600;
+        text-decoration: underline;
+      }
+
+      .link-info a:hover {
+        color: #764ba2;
+      }
+    </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <button class="back-btn" onclick="goBack()" aria-label="Go back">←</button>
+    <div class="logo">
+      <img src="{{ url_for('static', filename='image/logo.png') }}" alt="BookExChelf" class="logo">
+    </div>
+    <div class="auth-buttons">
+      <a href="/logout" class="btn ghost">Log Out</a>
+      <a href="/profile" class="btn primary profile-btn" title="{{ session.get('user_name', 'Profile') }}">
+        {{ session.get('user_name', 'U')[0].upper() }}
+        {% if is_premium %}
+        <span class="premium-badge" title="Premium Member"><span class="premium-badge-crown">👑</span></span>
+        {% endif %}
+      </a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <main class="container">
+    <h1 class="headline">
+      <span>{{ book.book_name }}</span>
+    </h1>
+
+    <p class="subtitle">
+      Edit book details and track your reading progress
+    </p>
+  </main>
+
+  <!-- ERROR/SUCCESS MESSAGES -->
+  {% if error %}
+    <div class="error-banner show">
+      {{ error }}
+    </div>
+  {% endif %}
+
+  {% if success %}
+    <div class="success-banner show">
+      {{ success }}
+    </div>
+  {% endif %}
+
+  <!-- BOOK EDIT FORM -->
+  <div class="book-form-container">
+    <form method="POST" enctype="multipart/form-data" class="book-form">
+
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" name="title" value="{{ book.book_name }}" required>
+      </div>
+
+      <div class="form-group">
+        <label>Total Pages</label>
+        <input type="number" name="total_pages" value="{{ book.total_pages or '' }}">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" name="start_date"
+            value="{{ book.start_date.strftime('%Y-%m-%d') if book.start_date }}">
+        </div>
+
+        <div class="form-group">
+          <label>Target Date</label>
+          <input type="date" name="target_date"
+            value="{{ book.target_date.strftime('%Y-%m-%d') if book.target_date }}">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Current Page</label>
+          <input type="number" name="current_page" value="{{ book.current_page or '' }}">
+        </div>
+
+        <div class="form-group">
+          <label>Days to Finish</label>
+          <input type="text" name="days_to_finish" value="{% if book.target_date %}{{ 'Completed' if (book.target_date - book.today_date).days < 0 else (book.target_date - book.today_date).days }}{% endif %}" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Percent Completed</label>
+          <input type="number" name="percent_completed" value="{{ ((book.current_page/book.total_pages)*100) if book.total_pages and book.current_page else '' }}" readonly>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Intention / Notes</label>
+        <textarea name="intention" rows="4">{{ book.intention or '' }}</textarea>
+      </div>
+
+      <!-- FILE UPLOAD SECTION - PREMIUM ONLY -->
+      <div class="form-group premium-feature {% if not is_premium %}locked{% endif %}">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <label style="margin-bottom: 0;">📎 Upload File (PDF, DOC, TXT, EPUB)</label>
+          {% if not is_premium %}
+            <div class="premium-lock-badge">👑 Premium Only</div>
+          {% endif %}
+        </div>
+        
+        <input type="file" name="file" {% if not is_premium %}disabled{% endif %}>
+        
+        {% if not is_premium %}
+          <div class="premium-message">
+            🔒 <strong>File uploads are a premium feature!</strong><br>
+            Upload and store your book files, annotations, and more with Premium.
+            <br>
+            <a href="/pricing">✨ Upgrade to Premium Now</a>
+          </div>
+        {% else %}
+          {% if book.file_path %}
+            <p class="file-info">
+              ✅ <a href="{{ url_for('static', filename='uploads/' + book.file_path) }}" target="_blank">
+                📥 Download uploaded file
+              </a>
+              <span style="color: #999;">({{ book.file_path }})</span>
+            </p>
+          {% else %}
+            <p style="color: #999; font-size: 13px; margin-top: 8px;">No file uploaded yet</p>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label>External Link</label>
+        <input type="url" name="external_link" value="{{ book.external_link or '' }}">
+        {% if book.external_link %}
+          <p class="link-info">
+            🔗 <a href="{{ book.external_link }}" target="_blank">Open link</a>
+          </p>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="create-shelf">💾 Save Changes</button>
+    </form>
+
+  </div>
+
+  <button class="btn primary" onclick="markBookCompleted({{ book.id }})" style="margin-top: 20px;">
+    ✅ Mark as Completed
+  </button>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-section">
+        <h4>About Bookex Chelf</h4>
+        <p>Your personal reading companion to track, organize, and manage your reading habits.</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="/dashboard">Dashboard</a></li>
+          <li><a href="/logout">Log Out</a></li>
+          <li><a href="/">Home</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Information</h4>
+        <ul>
+          <li><a href="/terms">Privacy Policy</a></li>
+          <li><a href="/privacy">Terms of Service</a></li>
+          <li><a href="#">Contact Us</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Connect With Us</h4>
+        <ul>
+          <li><a href="#">Twitter</a></li>
+          <li><a href="#">Facebook</a></li>
+          <li><a href="#">Instagram</a></li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2026 Bookex Chelf. All rights reserved.</p>
+    </div>
+  </footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+function goBack() {
+    // First, try to use history.back()
+    window.history.back();
+    
+    // Fallback: if history is empty, go to dashboard after a short delay
+    setTimeout(() => {
+        // Check if we're still on the same page (history.back didn't work)
+        if (document.title.includes('Bookex Chelf')) {
+            window.location.href = '/dashboard';
+        }
+    }, 500);
+}
+
+function markBookCompleted(bookId) {
+    if (confirm('Mark this book as completed?')) {
+        fetch('/mark-book-completed', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                book_id: bookId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ Book marked as completed!');
+                location.reload();
+            } else {
+                alert('❌ Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error marking book as completed');
+        });
+    }
+}
+
+// Auto-hide success message after 5 seconds
+window.addEventListener('load', function() {
+  const successBanner = document.querySelector('.success-banner.show');
+  if (successBanner) {
+    setTimeout(() => {
+      successBanner.classList.remove('show');
+    }, 5000);
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!-- templates/pricing.html -->
+{% extends "base.html" %}
+
+{% block title %}Upgrade to Premium - Book Chelf{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">
+        Upgrade to Book Chelf Premium
+      </h1>
+      <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+        Unlock powerful tools to finish more books, retain knowledge better, and build lasting reading habits.
+      </p>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+      
+      <!-- Free Plan -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+        <div class="mb-6">
+          <h3 class="text-2xl font-bold text-gray-900">Free</h3>
+          <div class="mt-4">
+            <span class="text-4xl font-bold">₹0</span>
+            <span class="text-gray-600">/forever</span>
+          </div>
+        </div>
+        
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            Track up to 10 books
+          </li>
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            3 custom shelves
+          </li>
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            Basic reading stats
+          </li>
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            Text notes only
+          </li>
+        </ul>
+        
+        {% if not current_user.is_authenticated %}
+          <a href="{{ url_for('auth.signup') }}" 
+             class="block w-full bg-gray-100 text-gray-900 text-center py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition">
+            Sign Up Free
+          </a>
+        {% else %}
+          <div class="text-center py-3 px-4 border rounded-lg bg-gray-50">
+            <p class="text-gray-700">Your current plan</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Premium Plan -->
+      <div class="bg-white rounded-2xl shadow-xl p-8 border-2 border-blue-500 transform md:scale-105 relative">
+        <!-- Popular badge -->
+        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <span class="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+            MOST POPULAR
+          </span>
+        </div>
+        
+        <div class="mb-6">
+          <h3 class="text-2xl font-bold text-gray-900">Premium</h3>
+          <div class="mt-4">
+            <span class="text-4xl font-bold">₹299</span>
+            <span class="text-gray-600">/month</span>
+          </div>
+          <p class="text-gray-500 text-sm mt-2">Cancel anytime</p>
+        </div>
+        
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span class="font-medium">Unlimited books & shelves</span>
+          </li>
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span class="font-medium">Smart Reading Scheduler</span>
+          </li>
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span class="font-medium">Voice Notes & Highlights</span>
+          </li>
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span class="font-medium">Advanced Analytics</span>
+          </li>
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span class="font-medium">Export All Data</span>
+          </li>
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span class="font-medium">Tamil Book Recommendations</span>
+          </li>
+          <li class="flex items-center">
+            <svg class="h-5 w-5 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span class="font-medium">Priority Support</span>
+          </li>
+        </ul>
+        
+        <!-- PAYMENT BUTTON -->
+        <button onclick="showPaymentOptions()" 
+                class="w-full bg-blue-600 text-white text-center py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition text-lg">
+          Upgrade to Premium
+        </button>
+        
+        <!-- Optional: Annual plan -->
+        <div class="mt-4 text-center">
+          <a href="#" class="text-blue-600 hover:text-blue-800 text-sm">
+            Or save 16% with annual billing (₹2,999/year)
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Options Modal (Hidden by default) -->
+    <div id="paymentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Choose Payment Method</h3>
+          
+          <!-- UPI Option -->
+          <div class="mb-4">
+            <button onclick="payWithUPI()" 
+                    class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 mb-2">
+              Pay with UPI
+            </button>
+            <p class="text-sm text-gray-600">Google Pay, PhonePe, Paytm, etc.</p>
+          </div>
+          
+          <!-- Manual Payment Option -->
+          <div class="mb-4">
+            <button onclick="showManualPayment()" 
+                    class="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-medium hover:bg-gray-300">
+              Manual Payment Instructions
+            </button>
+          </div>
+          
+          <!-- Card Payment (for later) -->
+          <div class="mb-4 opacity-50 cursor-not-allowed">
+            <button disabled class="w-full bg-gray-100 text-gray-400 py-3 px-4 rounded-lg font-medium">
+              Credit/Debit Card (Coming Soon)
+            </button>
+          </div>
+          
+          <button onclick="hidePaymentModal()" 
+                  class="mt-4 text-gray-600 hover:text-gray-800">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Payment Instructions (Hidden) -->
+    <div id="manualPayment" class="hidden mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+      <h4 class="text-lg font-medium text-gray-900 mb-4">Manual Payment Instructions</h4>
+      <ol class="list-decimal pl-5 space-y-2 text-gray-700">
+        <li>Send ₹299 to our UPI ID: <code class="bg-gray-100 px-2 py-1 rounded">bookchelf@okaxis</code></li>
+        <li>Take a screenshot of the payment confirmation</li>
+        <li>Email the screenshot to <code class="bg-gray-100 px-2 py-1 rounded">payments@bookchelf.com</code></li>
+        <li>Include your registered email address in the email</li>
+        <li>We'll activate your Premium account within 24 hours</li>
+      </ol>
+      <div class="mt-4">
+        <button onclick="hideManualPayment()" class="text-blue-600 hover:text-blue-800">
+          Close Instructions
+        </button>
+      </div>
+    </div>
+
+    <!-- Feature Comparison Table -->
+    <div class="mt-16 max-w-4xl mx-auto">
+      <h2 class="text-2xl font-bold text-center mb-8">Compare Plans</h2>
+      <div class="bg-white rounded-xl shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Feature</th>
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Free</th>
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Premium</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Books Limit</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">10 books</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center font-medium">Unlimited</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Reading Scheduler</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">❌ Not available</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center font-medium">✅ Included</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Voice Notes</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">❌ Text only</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center font-medium">✅ Audio + Text</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Data Export</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">❌ Not available</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center font-medium">✅ Full export</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Support</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">Community</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center font-medium">Priority email</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="mt-16 max-w-3xl mx-auto">
+      <h2 class="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+      <div class="space-y-4">
+        <div class="border rounded-lg p-6">
+          <h4 class="font-medium text-gray-900 mb-2">Can I cancel anytime?</h4>
+          <p class="text-gray-600">Yes, you can cancel your Premium subscription anytime. No questions asked.</p>
+        </div>
+        <div class="border rounded-lg p-6">
+          <h4 class="font-medium text-gray-900 mb-2">What payment methods do you accept?</h4>
+          <p class="text-gray-600">Currently we accept UPI payments (Google Pay, PhonePe, Paytm). Card payments coming soon.</p>
+        </div>
+        <div class="border rounded-lg p-6">
+          <h4 class="font-medium text-gray-900 mb-2">Will I lose my data if I downgrade?</h4>
+          <p class="text-gray-600">No, your data is always safe. If you downgrade, we'll keep all your books and notes, but you'll have access limits.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Simple JavaScript for payment modal
+function showPaymentOptions() {
+  document.getElementById('paymentModal').classList.remove('hidden');
+}
+
+function hidePaymentModal() {
+  document.getElementById('paymentModal').classList.add('hidden');
+}
+
+function showManualPayment() {
+  document.getElementById('paymentModal').classList.add('hidden');
+  document.getElementById('manualPayment').classList.remove('hidden');
+}
+
+function hideManualPayment() {
+  document.getElementById('manualPayment').classList.add('hidden');
+}
+
+function payWithUPI() {
+  // UPI Deep Link - Replace with your actual UPI ID
+  const upiLink = "upi://pay?pa=bookchelf@okaxis&pn=BookChelf&am=299&tn=Premium%20Subscription";
+  
+  // Try to open UPI app
+  window.location.href = upiLink;
+  
+  // If UPI app not installed, show instructions
+  setTimeout(() => {
+    showManualPayment();
+  }, 1000);
+}
+</script>
+
+{% endblock %}

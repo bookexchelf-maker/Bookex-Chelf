@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="navbar">
+
+</header>
+
+
+
+<div class="auth-container">
+  <h2>Get into your account</h2>
+  <p>Start tracking and improving your reading habit</p>
+
+
+    <div class = cardlayout>
+        <div id="organic-div">
+            <div class="header_content">
+                <div class = "header_content_heading">Sign in</div>
+                <div class="alternate_signin_container"></div>
+                <form method="post" class="login_form">
+                    {% if error %}
+                    <div style="color: red; margin-bottom: 15px; padding: 10px; background: #ffe0e0; border-radius: 5px;">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+                    <div class="email_input">
+                        <input id="username" name="email" placeholder="Email id" aria-label="email" type="email" required>
+                    </div>
+                    <div class="password">
+                        <input type="password" name="password" placeholder="password" aria-label="Password" required>
+                    </div>
+                    <div class="login_form_action">
+                        <button type="submit" class="btn primary full" aria-label="sign in">Sign in</button> 
+                    </div>
+                    <div class="login_form_bottom">new to Bookex Chelf? <a href="/signup">Sign up</a></div>
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+
+
+
+</body>
+</html>

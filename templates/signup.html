@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* Terms & Conditions Checkbox Styles */
+    .terms-checkbox-container {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .terms-checkbox-container input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .terms-checkbox-label {
+      font-size: 14px;
+      color: #333;
+      line-height: 1.5;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .terms-checkbox-label a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .terms-checkbox-label a:hover {
+      color: #764ba2;
+      text-decoration: underline;
+    }
+
+    /* Disabled Sign Up Button Style */
+    .btn.primary.full:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .btn.primary.full:disabled:hover {
+      background-color: #ccc;
+      transform: none;
+    }
+
+    /* Error Message Style */
+    .error-message {
+      color: #dc3545;
+      font-size: 13px;
+      margin-top: 8px;
+      display: none;
+      padding: 10px;
+      background: #f8d7da;
+      border-radius: 4px;
+      border: 1px solid #f5c6cb;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    /* Success Message Style */
+    .success-message {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      border-left: 4px solid #4caf50;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    /* OTP Section Styles */
+    .otp-section {
+      display: none;
+      margin-top: 30px;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      border: 2px solid #667eea;
+    }
+
+    .otp-section.show {
+      display: block;
+    }
+
+    .otp-section h3 {
+      color: #333;
+      margin: 0 0 10px 0;
+      font-size: 18px;
+    }
+
+    .otp-email-display {
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      text-align: center;
+      color: #667eea;
+      font-weight: 600;
+      border: 1px solid #ddd;
+    }
+
+    .otp-input-group {
+      margin-bottom: 15px;
+    }
+
+    .otp-input-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .otp-input-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      letter-spacing: 2px;
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .otp-input-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .timer {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    .timer span {
+      color: #667eea;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .timer.expired span {
+      color: #dc3545;
+    }
+
+    .otp-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .otp-buttons button {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .otp-verify-btn {
+      background: #667eea;
+      color: white;
+      grid-column: 1 / -1;
+    }
+
+    .otp-verify-btn:hover:not(:disabled) {
+      background: #764ba2;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .otp-verify-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .otp-resend-btn {
+      background: none;
+      border: 2px solid #667eea;
+      color: #667eea;
+    }
+
+    .otp-resend-btn:hover:not(:disabled) {
+      background: #667eea;
+      color: white;
+    }
+
+    .otp-resend-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: #ccc;
+      color: #ccc;
+    }
+
+    .otp-error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      border: 1px solid #f5c6cb;
+      display: none;
+      font-size: 13px;
+    }
+
+    .otp-error.show {
+      display: block;
+    }
+
+    .otp-warning {
+      background: #fff3cd;
+      color: #856404;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      border: 1px solid #ffeeba;
+      display: none;
+      font-size: 13px;
+    }
+
+    .otp-warning.show {
+      display: block;
+    }
+
+    .form-section {
+      transition: opacity 0.3s;
+    }
+
+    .form-section.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-container">
+  <h2>Create your account</h2>
+  <p>Start tracking and improving your reading habit</p>
+  
+  <div style="background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align: center;">
+    <p style="color: #2e7d32; font-weight: 600; margin: 0;">🎉 Get 30 Days of Premium Access FREE!</p>
+    <p style="color: #558b2f; font-size: 14px; margin: 5px 0 0 0;">Unlock all premium features when you sign up</p>
+  </div>
+
+  <div class="cardlayout">
+    <div id="organic-div">
+      <div class="header_content">
+        <div class="header_content_heading">Sign Up</div>
+        <div class="alternate_signin_container"></div>
+        
+        <!-- SIGNUP FORM -->
+        <form action="/signup" method="POST" class="login_form" id="signupForm">
+          <!-- FORM SECTION (Email, Username, Password, etc.) -->
+          <div class="form-section" id="formSection">
+            <!-- Email Input -->
+            <div class="email_input">
+              <input 
+                id="mailid" 
+                name="email" 
+                placeholder="Email id" 
+                aria-label="email" 
+                type="email" 
+                required>
+            </div>
+
+            <!-- Username Input -->
+            <div class="username">
+              <input 
+                type="text" 
+                id="username"
+                name="username" 
+                placeholder="Username" 
+                aria-label="Username" 
+                required>
+            </div>
+
+            <!-- Password Input -->
+            <div class="password">
+              <input 
+                type="password" 
+                id="password"
+                name="password" 
+                placeholder="Password" 
+                aria-label="Password" 
+                required>
+            </div>
+
+            <!-- Terms & Conditions Checkbox -->
+            <div class="terms-checkbox-container">
+              <input 
+                type="checkbox" 
+                id="termsCheckbox" 
+                name="terms_accepted"
+                required>
+              <label for="termsCheckbox" class="terms-checkbox-label">
+                I agree to the 
+                <a href="/terms" target="_blank">Terms and Conditions</a>
+                and 
+                <a href="/privacy" target="_blank">Privacy Policy</a>
+              </label>
+            </div>
+
+            <!-- Signup Error Message -->
+            <div id="signupErrorMessage" class="error-message"></div>
+
+            <!-- Referral Code Section -->
+            <div id="referralSection" style="margin: 20px 0; padding: 15px; background: #e8f5e9; border-radius: 8px; display: none;">
+              <p style="color: #2e7d32; font-weight: 600; margin-bottom: 10px;">✨ You have a referral code!</p>
+              <p style="color: #558b2f; font-size: 14px; margin-bottom: 10px;" id="referralMessage"></p>
+            </div>
+
+            <!-- Referral Code Input -->
+            <div style="margin: 20px 0;">
+              <label style="font-size: 14px; color: #666; display: block; margin-bottom: 8px;">
+                Have a referral code? (Optional)
+              </label>
+              <input 
+                type="text" 
+                id="referralCodeInput" 
+                placeholder="Enter referral code (e.g., ABC123XYZ)" 
+                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+              <p id="referralError" style="color: #dc3545; font-size: 12px; margin-top: 5px; display: none;"></p>
+              <p id="referralSuccess" style="color: #4caf50; font-size: 12px; margin-top: 5px; display: none; font-weight: 600;"></p>
+            </div>
+
+            <!-- Hidden input for referral code -->
+            <input type="hidden" id="referralCodeHidden" name="referral_code" value="">
+
+            <!-- Sign Up Button -->
+            <div class="login_form_action">
+              <button 
+                type="button" 
+                class="btn primary full" 
+                id="signupBtn"
+                aria-label="sign up"
+                disabled>
+                Sign up
+              </button> 
+            </div>
+
+            <!-- Link to Sign In -->
+            <div class="login_form_bottom">
+              Already on Bookex Chelf? 
+              <a href="/signin">Sign In</a>
+            </div>
+          </div>
+
+          <!-- OTP VERIFICATION SECTION -->
+          <div class="otp-section" id="otpSection">
+            <h3>✉️ Verify Your Email</h3>
+            <p style="color: #666; font-size: 14px; margin-bottom: 15px;">We've sent a 6-digit code to your email. Enter it below to complete your signup.</p>
+            
+            <div class="otp-email-display" id="otpEmail"></div>
+
+            <div class="otp-error" id="otpError"></div>
+            <div class="otp-warning" id="otpWarning"></div>
+
+            <div class="otp-input-group">
+              <label for="otpCode">Verification Code</label>
+              <input 
+                type="text" 
+                id="otpCode"
+                placeholder="000000" 
+                maxlength="6"
+                inputmode="numeric"
+                pattern="[0-9]{6}"
+                required>
+            </div>
+
+            <div class="timer" id="timer">
+              ⏱️ Code expires in: <span id="timerValue">10:00</span>
+            </div>
+
+            <div class="otp-buttons">
+              <button type="button" class="otp-resend-btn" id="resendBtn">Resend Code</button>
+              <button type="button" class="otp-verify-btn" id="verifyBtn">Verify Email</button>
+            </div>
+
+            <div style="margin-top: 15px;">
+              <button type="button" class="btn" id="editDetailsBtn" style="background: #f0f0f0; color: #333; width: 100%; padding: 10px; border: none; border-radius: 6px; cursor: pointer;">
+                ← Back & Edit Details
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let timeLeft = 600; // 10 minutes
+  let timerInterval = null;
+  let otpAttempts = 0;
+  let resendCooldown = 0;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const termsCheckbox = document.getElementById('termsCheckbox');
+    const signupBtn = document.getElementById('signupBtn');
+    const signupForm = document.getElementById('signupForm');
+    const otpSection = document.getElementById('otpSection');
+    const formSection = document.getElementById('formSection');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const resendBtn = document.getElementById('resendBtn');
+    const editDetailsBtn = document.getElementById('editDetailsBtn');
+    const otpCode = document.getElementById('otpCode');
+    const otpError = document.getElementById('otpError');
+    const signupErrorMessage = document.getElementById('signupErrorMessage');
+
+    // ============================================
+    // STEP 1: Enable/Disable signup button based on checkbox
+    // ============================================
+    termsCheckbox.addEventListener('change', function() {
+      signupBtn.disabled = !this.checked;
+      if (this.checked) {
+        signupErrorMessage.classList.remove('show');
+      }
+    });
+
+    // ============================================
+    // STEP 2: Handle Sign Up Button Click
+    // ============================================
+    signupBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log('🔵 Sign up button clicked');
+
+      // Validate checkbox
+      if (!termsCheckbox.checked) {
+        signupErrorMessage.classList.add('show');
+        signupErrorMessage.textContent = '⚠️ You must agree to Terms and Conditions';
+        return;
+      }
+
+      // Get form values
+      const email = document.getElementById('mailid').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      // Validate all fields
+      if (!email || !username || !password) {
+        signupErrorMessage.classList.add('show');
+        signupErrorMessage.textContent = '⚠️ Please fill all fields';
+        return;
+      }
+
+      console.log('✅ All validations passed. Sending signup request...');
+      
+      // Disable button during request
+      signupBtn.disabled = true;
+      signupBtn.textContent = 'Sending code...';
+
+      // Prepare form data
+      const formData = new FormData(signupForm);
+
+      // Send signup request to backend
+      fetch('/signup', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('📥 Signup response:', data);
+        
+        if (data.success) {
+          console.log('✅ OTP sent successfully!');
+          // Show OTP section
+          showOTPSection(email);
+        } else {
+          console.error('❌ Signup failed:', data.error);
+          signupErrorMessage.classList.add('show');
+          signupErrorMessage.textContent = '❌ ' + (data.error || 'An error occurred');
+          signupBtn.disabled = false;
+          signupBtn.textContent = 'Sign up';
+        }
+      })
+      .catch(err => {
+        console.error('❌ Network error:', err);
+        signupErrorMessage.classList.add('show');
+        signupErrorMessage.textContent = '❌ Network error. Please check your connection and try again.';
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign up';
+      });
+    });
+
+    // ============================================
+    // STEP 3: Show OTP Section
+    // ============================================
+    function showOTPSection(email) {
+      console.log('🎬 Showing OTP section for:', email);
+      formSection.classList.add('disabled');
+      otpSection.classList.add('show');
+      document.getElementById('otpEmail').textContent = email;
+      otpCode.focus();
+      startTimer();
+      otpAttempts = 0;
+      otpError.classList.remove('show');
+      resendCooldown = 60; // Start cooldown
+      updateResendButton();
+    }
+
+    // ============================================
+    // STEP 4: Hide OTP Section
+    // ============================================
+    function hideOTPSection() {
+      console.log('🎬 Hiding OTP section');
+      formSection.classList.remove('disabled');
+      otpSection.classList.remove('show');
+      stopTimer();
+      otpCode.value = '';
+      otpError.classList.remove('show');
+      otpAttempts = 0;
+      signupBtn.disabled = !termsCheckbox.checked;
+      signupBtn.textContent = 'Sign up';
+    }
+
+    // ============================================
+    // STEP 5: Verify OTP Button
+    // ============================================
+    verifyBtn.addEventListener('click', function() {
+      const otp = otpCode.value.trim();
+
+      // Validate OTP format
+      if (!otp || otp.length !== 6 || !/^\d+$/.test(otp)) {
+        otpError.classList.add('show');
+        otpError.textContent = '⚠️ Please enter a valid 6-digit code';
+        return;
+      }
+
+      console.log('🔐 Verifying OTP...');
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = 'Verifying...';
+
+      // Prepare form data with OTP
+      const formData = new FormData(signupForm);
+      formData.append('otp_code', otp);
+
+      // Send OTP verification request
+      fetch('/verify-otp', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('📥 OTP verification response:', data);
+        
+        if (data.success) {
+          console.log('✅ OTP verified! Redirecting to dashboard...');
+          // Redirect to dashboard
+          window.location.href = '/dashboard';
+        } else {
+          otpAttempts++;
+          const remaining = 5 - otpAttempts;
+
+          if (remaining <= 0) {
+            console.error('❌ Too many failed attempts');
+            hideOTPSection();
+            signupErrorMessage.classList.add('show');
+            signupErrorMessage.textContent = '❌ Too many failed attempts. Please sign up again.';
+            return;
+          }
+
+          console.warn(`⚠️ Wrong OTP. ${remaining} attempts remaining`);
+          otpError.classList.add('show');
+          otpError.textContent = `❌ ${data.error || 'Invalid code'} (${remaining} attempts left)`;
+          otpCode.value = '';
+          otpCode.focus();
+        }
+
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = 'Verify Email';
+      })
+      .catch(err => {
+        console.error('❌ Network error during verification:', err);
+        otpError.classList.add('show');
+        otpError.textContent = '❌ An error occurred. Please try again.';
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = 'Verify Email';
+      });
+    });
+
+    // ============================================
+    // STEP 6: Resend OTP Button
+    // ============================================
+    resendBtn.addEventListener('click', function() {
+      console.log('📤 Resending OTP...');
+      resendBtn.disabled = true;
+
+      const formData = new FormData(signupForm);
+
+      fetch('/resend-otp', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('📥 Resend response:', data);
+        
+        if (data.success) {
+          console.log('✅ OTP resent successfully!');
+          otpError.classList.remove('show');
+          const warningEl = document.getElementById('otpWarning');
+          warningEl.classList.add('show');
+          warningEl.textContent = '✅ New code sent to your email!';
+          timeLeft = 600;
+          startTimer();
+          otpCode.value = '';
+          otpCode.focus();
+          otpAttempts = 0;
+          resendCooldown = 60; // Start cooldown
+        } else {
+          console.error('❌ Resend failed:', data.error);
+          otpError.classList.add('show');
+          otpError.textContent = '❌ ' + (data.error || 'Failed to resend code');
+          resendBtn.disabled = false;
+        }
+      })
+      .catch(err => {
+        console.error('❌ Network error during resend:', err);
+        otpError.classList.add('show');
+        otpError.textContent = '❌ Failed to resend code. Please try again.';
+        resendBtn.disabled = false;
+      });
+
+      updateResendButton();
+    });
+
+    // ============================================
+    // STEP 7: Back Button
+    // ============================================
+    editDetailsBtn.addEventListener('click', function() {
+      console.log('⬅️ Back button clicked');
+      hideOTPSection();
+    });
+
+    // ============================================
+    // STEP 8: Auto-format OTP input
+    // ============================================
+    otpCode.addEventListener('input', function(e) {
+      this.value = this.value.replace(/[^\d]/g, '').slice(0, 6);
+    });
+
+    // ============================================
+    // STEP 9: Timer Functions
+    // ============================================
+    function startTimer() {
+      const timerValue = document.getElementById('timerValue');
+      const timerEl = document.getElementById('timer');
+
+      if (timerInterval) clearInterval(timerInterval);
+
+      timerInterval = setInterval(() => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerValue.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          verifyBtn.disabled = true;
+          timerEl.classList.add('expired');
+          otpError.classList.add('show');
+          otpError.textContent = '⏱️ Code expired. Click "Resend Code" to get a new one.';
+        }
+
+        timeLeft--;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
+      timeLeft = 600;
+    }
+
+    // ============================================
+    // STEP 10: Referral Code Validation
+    // ============================================
+    const referralCodeInput = document.getElementById('referralCodeInput');
+    referralCodeInput.addEventListener('change', function() {
+      const code = this.value.trim();
+      if (code) {
+        validateReferralCode(code);
+      }
+    });
+
+    // Check for referral code in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      referralCodeInput.value = refCode;
+      validateReferralCode(refCode);
+    }
+
+    function validateReferralCode(code) {
+      fetch('/api/check-referral-code', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({code: code})
+      })
+      .then(response => response.json())
+      .then(data => {
+        const errorEl = document.getElementById('referralError');
+        const successEl = document.getElementById('referralSuccess');
+        
+        if (data.success) {
+          errorEl.style.display = 'none';
+          successEl.style.display = 'block';
+          successEl.textContent = `✅ ${data.message} (Referred by ${data.referrer_name})`;
+          document.getElementById('referralCodeHidden').value = code;
+        } else {
+          successEl.style.display = 'none';
+          errorEl.style.display = 'block';
+          errorEl.textContent = `❌ ${data.error}`;
+          document.getElementById('referralCodeHidden').value = '';
+        }
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        document.getElementById('referralError').style.display = 'block';
+        document.getElementById('referralError').textContent = 'Error validating code';
+      });
+    }
+
+    // ============================================
+    // STEP 11: Resend Button Cooldown
+    // ============================================
+    function updateResendButton() {
+      if (resendCooldown > 0) {
+        resendBtn.disabled = true;
+        resendBtn.textContent = `Resend in ${resendCooldown}s`;
+        
+        const cooldownInterval = setInterval(() => {
+          resendCooldown--;
+          if (resendCooldown <= 0) {
+            clearInterval(cooldownInterval);
+            resendBtn.disabled = false;
+            resendBtn.textContent = 'Resend Code';
+          } else {
+            resendBtn.textContent = `Resend in ${resendCooldown}s`;
+          }
+        }, 1000);
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

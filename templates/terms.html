@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms and Conditions - BookExChelf</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .terms-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .terms-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 30px;
+      border-radius: 12px 12px 0 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .terms-header h1 {
+      font-size: 36px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .terms-header p {
+      font-size: 14px;
+      opacity: 0.95;
+      margin-bottom: 5px;
+    }
+
+    .terms-content {
+      background: white;
+      padding: 50px;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      line-height: 1.8;
+      color: #333;
+    }
+
+    .terms-content h2 {
+      color: #667eea;
+      font-size: 22px;
+      margin-top: 35px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e8eef7;
+      font-weight: 600;
+    }
+
+    .terms-content h3 {
+      color: #555;
+      font-size: 16px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .terms-content p {
+      margin-bottom: 15px;
+      color: #555;
+      font-size: 15px;
+    }
+
+    .terms-content ul,
+    .terms-content ol {
+      margin-left: 25px;
+      margin-bottom: 15px;
+      color: #555;
+    }
+
+    .terms-content li {
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    .terms-content strong {
+      color: #333;
+      font-weight: 600;
+    }
+
+    .section-number {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 35px;
+      margin-right: 10px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .subsection {
+      background: #f9fafb;
+      padding: 15px;
+      border-left: 4px solid #667eea;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+
+    .subsection h3 {
+      margin-top: 0;
+    }
+
+    .highlight-box {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8eef7 100%);
+      border: 1px solid #dde5f4;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 25px 0;
+      border-left: 4px solid #667eea;
+    }
+
+    .highlight-box h4 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+
+    .highlight-box ul {
+      margin-left: 20px;
+    }
+
+    .highlight-box li {
+      margin-bottom: 8px;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    table th {
+      background: #667eea;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    table td {
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
+      color: #555;
+    }
+
+    table tr:hover {
+      background: #f9fafb;
+    }
+
+    .contact-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 8px;
+      margin-top: 40px;
+    }
+
+    .contact-section h3 {
+      color: white;
+      margin-top: 0;
+    }
+
+    .contact-section p {
+      color: rgba(255, 255, 255, 0.95);
+      margin-bottom: 8px;
+    }
+
+    .contact-section a {
+      color: #ffd700;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .contact-section a:hover {
+      text-decoration: underline;
+    }
+
+    .footer-info {
+      margin-top: 50px;
+      padding-top: 30px;
+      border-top: 2px solid #e0e0e0;
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 30px;
+      padding: 10px 20px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .back-button:hover {
+      background: #764ba2;
+      transform: translateX(-5px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .version-info {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 30px;
+      font-size: 14px;
+      color: #856404;
+    }
+
+    .version-info strong {
+      color: #333;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .terms-content {
+        padding: 30px 20px;
+      }
+
+      .terms-header {
+        padding: 30px 20px;
+      }
+
+      .terms-header h1 {
+        font-size: 28px;
+      }
+
+      .terms-content h2 {
+        font-size: 18px;
+      }
+
+      .section-number {
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        font-size: 12px;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      table th,
+      table td {
+        padding: 8px;
+      }
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white;
+      }
+
+      .terms-header {
+        page-break-after: avoid;
+      }
+
+      .terms-content h2 {
+        page-break-after: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="terms-wrapper">
+  <!-- Header -->
+  <div class="terms-header">
+    <button onclick="history.back()" class="back-button">← Back</button>
+    <h1>📋 Terms and Conditions</h1>
+    <p><strong>Last Updated:</strong> January 2026</p>
+    <p><strong>Effective Date:</strong> January 2026</p>
+  </div>
+
+  <!-- Content -->
+  <div class="terms-content">
+    <div class="version-info">
+      <strong>⚠️ Important:</strong> Please read these Terms carefully before using BookExChelf. By accessing and using our Service, you agree to be bound by these Terms.
+    </div>
+
+    <!-- Section 1 -->
+    <h2><span class="section-number">1</span>Agreement to Terms</h2>
+    <p>
+      By accessing and using BookExChelf ("Website," "App," "Service," "we," "us," or "our"), you agree to be bound by these Terms and Conditions ("Terms"). If you do not agree with any part of these terms, please do not use our Service.
+    </p>
+    <p>
+      We reserve the right to modify these Terms at any time. Your continued use of the Service following the posting of revised Terms means you accept and agree to the changes.
+    </p>
+
+    <!-- Section 2 -->
+    <h2><span class="section-number">2</span>Service Description</h2>
+    <p>BookExChelf is a reading tracking and management application that allows users to:</p>
+    <ul>
+      <li>Track books they are reading</li>
+      <li>Create personal book shelves</li>
+      <li>Monitor reading progress</li>
+      <li>Set reading goals</li>
+      <li>View reading analytics</li>
+      <li>Participate in reading leaderboards</li>
+      <li>Import books from Goodreads</li>
+    </ul>
+    <p><strong>The Service is provided "as is" without warranties of any kind, except as expressly stated in these Terms.</strong></p>
+
+    <!-- Section 3 -->
+    <h2><span class="section-number">3</span>User Accounts & Registration</h2>
+
+    <div class="subsection">
+      <h3>3.1 Account Creation</h3>
+      <p>To use certain features of BookExChelf, you must create an account by providing:</p>
+      <ul>
+        <li>Full name</li>
+        <li>Email address</li>
+        <li>Password (at least 6 characters)</li>
+      </ul>
+      <p>You agree to provide accurate, current, and complete information during registration.</p>
+    </div>
+
+    <div class="subsection">
+      <h3>3.2 Account Security</h3>
+      <p>You are responsible for:</p>
+      <ul>
+        <li>Maintaining the confidentiality of your password</li>
+        <li>All activities that occur under your account</li>
+        <li>Notifying us immediately of unauthorized account access</li>
+      </ul>
+      <p>We are not liable for any loss or damage arising from unauthorized use of your account.</p>
+    </div>
+
+    <div class="subsection">
+      <h3>3.3 Account Termination</h3>
+      <p>We reserve the right to terminate or suspend your account if you:</p>
+      <ul>
+        <li>Violate these Terms</li>
+        <li>Engage in illegal activities</li>
+        <li>Harass or abuse other users</li>
+        <li>Post inappropriate content</li>
+        <li>Attempt to manipulate or exploit the Service</li>
+      </ul>
+      <p><strong>Termination is at our sole discretion without liability.</strong></p>
+    </div>
+
+    <!-- Section 4 -->
+    <h2><span class="section-number">4</span>Subscription & Payment</h2>
+
+    <div class="subsection">
+      <h3>4.1 Premium Plans</h3>
+      <p>BookExChelf offers a Free tier and Premium subscriptions:</p>
+      
+      <div class="highlight-box">
+        <h4>Free Tier</h4>
+        <ul>
+          <li>10 books limit</li>
+          <li>2 shelves</li>
+          <li>Basic tracking features</li>
+          <li>Limited leaderboard access</li>
+        </ul>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Premium Tier</h4>
+        <ul>
+          <li>₹1/day (₹35/month or ₹365/year)</li>
+          <li>Unlimited books & shelves</li>
+          <li>Advanced analytics</li>
+          <li>Custom reading goals</li>
+          <li>Ad-free experience</li>
+          <li>Priority support</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3>4.2 Payment Processing</h3>
+      <ul>
+        <li>Payments are processed through <strong>Razorpay</strong> (payment gateway)</li>
+        <li>Your payment card information is <strong>NOT stored</strong> on our servers</li>
+        <li>All transactions are encrypted and secure</li>
+        <li>Receipts are sent to your registered email</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3>4.3 Billing Cycle</h3>
+      <ul>
+        <li>Monthly subscriptions renew automatically on the same date each month</li>
+        <li>Annual subscriptions renew on the anniversary date</li>
+        <li>You will receive email reminders before renewal</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3>4.4 Cancellation & Refunds</h3>
+      <ul>
+        <li>You can cancel your Premium subscription anytime</li>
+        <li>No refunds for partial months</li>
+        <li>Your account reverts to Free tier after cancellation</li>
+        <li>All premium features are disabled immediately upon cancellation</li>
+        <li>Your data remains accessible in Free tier format</li>
+      </ul>
+
+      <div class="highlight-box">
+        <h4>Refund Policy</h4>
+        <p><strong>Refunds are NOT issued for:</strong></p>
+        <ul>
+          <li>Accidental duplicate purchases (contact support)</li>
+          <li>Change of mind</li>
+          <li>Features you didn't use</li>
+        </ul>
+        <p><strong>Refunds MAY be issued for:</strong></p>
+        <ul>
+          <li>Unauthorized transactions (within 30 days)</li>
+          <li>Service outages longer than 24 hours</li>
+          <li>Technical bugs preventing feature use</li>
+        </ul>
+        <p><strong>Contact:</strong> support@bookexchelf.com for refund requests</p>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <h3>4.5 Price Changes</h3>
+      <p>We reserve the right to change subscription prices with 30 days notice. Price changes apply only to new subscriptions and renewals after the change date.</p>
+    </div>
+
+    <!-- Section 5 -->
+    <h2><span class="section-number">5</span>User Conduct & Restrictions</h2>
+
+    <div class="subsection">
+      <h3>5.1 Prohibited Activities</h3>
+      <p>You agree NOT to:</p>
+
+      <div class="highlight-box">
+        <h4>Legal Violations</h4>
+        <ul>
+          <li>Use the Service for any illegal purpose</li>
+          <li>Violate any local, state, national, or international law</li>
+          <li>Infringe on intellectual property rights</li>
+        </ul>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Technical Abuse</h4>
+        <ul>
+          <li>Hack, crack, or attempt to gain unauthorized access</li>
+          <li>Use bots, scrapers, or automated tools without permission</li>
+          <li>Perform denial-of-service (DDoS) attacks</li>
+          <li>Reverse engineer or decompile the Service</li>
+          <li>Attempt to discover vulnerabilities or exploit them</li>
+        </ul>
+      </div>
+
+      <div class="highlight-box">
+        <h4>Content Abuse</h4>
+        <ul>
+          <li>Post pornographic or sexually explicit content</li>
+          <li>Post hate speech, discrimination, or harassment</li>
+          <li>Post violent or threatening content</li>
+          <li>Upload malware or viruses</li>
+          <li>Post copyrighted content without permission</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 6 -->
+    <h2><span class="section-number">6</span>Intellectual Property Rights</h2>
+
+    <div class="subsection">
+      <h3>6.1 Service Ownership</h3>
+      <p>All content, features, and functionality of BookExChelf are owned by BookExChelf, including:</p>
+      <ul>
+        <li>Code and algorithms</li>
+        <li>Design and layout</li>
+        <li>Logos and trademarks</li>
+        <li>Text and graphics</li>
+        <li>Databases and collections</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3>6.2 User Rights</h3>
+      <p>You may NOT:</p>
+      <ul>
+        <li>Copy, reproduce, or distribute any part of the Service</li>
+        <li>Modify or create derivative works</li>
+        <li>Reverse engineer or attempt to extract source code</li>
+        <li>Sell or resell access to the Service</li>
+        <li>Use the Service for commercial purposes without permission</li>
+      </ul>
+    </div>
+
+    <!-- Section 7 -->
+    <h2><span class="section-number">7</span>Data & Privacy</h2>
+
+    <div class="subsection">
+      <h3>7.1 Data Collection</h3>
+      <p>We collect:</p>
+      <ul>
+        <li>Account information (name, email, password)</li>
+        <li>Reading data (books, progress, ratings)</li>
+        <li>Usage data (features used, time spent, device type)</li>
+        <li>Payment information (through Razorpay, not stored by us)</li>
+        <li>Analytics data (to improve the Service)</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3>7.2 Data Security</h3>
+      <p>We use:</p>
+      <ul>
+        <li>SSL/HTTPS encryption for data in transit</li>
+        <li>Hashed passwords (not stored in plain text)</li>
+        <li>Regular security audits</li>
+        <li>Secure Razorpay payment processing</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3>7.3 Third-Party Services</h3>
+      <p>We use:</p>
+      <ul>
+        <li><strong>Razorpay</strong> (payment processing)</li>
+        <li><strong>Google Analytics</strong> (usage analytics)</li>
+        <li><strong>DigitalOcean</strong> (hosting)</li>
+        <li><strong>Goodreads API</strong> (book data)</li>
+      </ul>
+      <p>Each has their own privacy policies which you should review.</p>
+    </div>
+
+    <!-- Section 8 -->
+    <h2><span class="section-number">8</span>Disclaimers & Limitations of Liability</h2>
+
+    <div class="highlight-box">
+      <h4>⚠️ Important Disclaimer</h4>
+      <p><strong>The Service is provided "AS IS" without warranties.</strong> We do NOT guarantee:</p>
+      <ul>
+        <li>Service will be error-free</li>
+        <li>Service will be uninterrupted</li>
+        <li>All features will work perfectly</li>
+        <li>All books/data will be accurate</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <h3>8.3 Limitation of Liability</h3>
+      <p>To the maximum extent allowed by law, we are NOT liable for:</p>
+      <ul>
+        <li>Lost data or accounts</li>
+        <li>Lost revenue or profits</li>
+        <li>Lost business opportunities</li>
+        <li>Indirect, incidental, or consequential damages</li>
+        <li>Service interruptions</li>
+      </ul>
+      <p><strong>Maximum liability:</strong> Amount you paid us in the past 3 months (or ₹0 if free user)</p>
+    </div>
+
+    <!-- Section 9 -->
+    <h2><span class="section-number">9</span>Changes & Discontinuation</h2>
+
+    <div class="subsection">
+      <h3>9.1 Service Changes</h3>
+      <p>We reserve the right to:</p>
+      <ul>
+        <li>Add, remove, or modify features</li>
+        <li>Change the appearance or functionality</li>
+        <li>Discontinue the Service</li>
+      </ul>
+      <p>We will provide 30 days notice for major changes that significantly harm user experience.</p>
+    </div>
+
+    <div class="subsection">
+      <h3>9.2 Service Discontinuation</h3>
+      <p>If we discontinue the Service:</p>
+      <ul>
+        <li>We will notify you 30 days in advance</li>
+        <li>You can request data export</li>
+        <li>All subscriptions will be refunded on a pro-rata basis</li>
+        <li>We will delete your data within 60 days</li>
+      </ul>
+    </div>
+
+    <!-- Section 10 -->
+    <h2><span class="section-number">10</span>Governing Law & Jurisdiction</h2>
+
+    <div class="subsection">
+      <h3>10.1 Governing Law</h3>
+      <p>These Terms are governed by the laws of <strong>India</strong>.</p>
+    </div>
+
+    <div class="subsection">
+      <h3>10.2 Dispute Resolution</h3>
+      <p><strong>For India:</strong></p>
+      <ul>
+        <li>Try to resolve disputes informally first</li>
+        <li>If unresolved, disputes fall under <strong>Consumer Protection Act, 2019</strong></li>
+        <li>Jurisdiction: Delhi courts (or your state consumer court)</li>
+      </ul>
+    </div>
+
+    <!-- Contact Section -->
+    <div class="contact-section">
+      <h3>📧 Questions About These Terms?</h3>
+      <p><strong>Email:</strong> <a href="mailto:legal@bookexchelf.com">legal@bookexchelf.com</a></p>
+      <p><strong>Website:</strong> <a href="https://bookexchelf.com" target="_blank">bookexchelf.com</a></p>
+      <p><strong>Support:</strong> <a href="mailto:support@bookexchelf.com">support@bookexchelf.com</a></p>
+      <p style="margin-top: 15px; font-size: 13px;">We typically respond within 7 business days</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-info">
+      <p><strong>Last Updated:</strong> January 2026</p>
+      <p><strong>Next Review:</strong> January 2027</p>
+      <p style="margin-top: 15px;">By using BookExChelf, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Smooth scrolling for section links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({behavior: 'smooth'});
+      }
+    });
+  });
+
+  // Print functionality
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+      e.preventDefault();
+      window.print();
+    }
+  });
+</script>
+
+</body>
+</html>

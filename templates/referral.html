@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referral Program - BookExChelf</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .referral-container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .referral-card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .referral-card h2 {
+      color: #667eea;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .referral-code-box {
+      background: #f5f7fa;
+      border: 2px dashed #667eea;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .referral-code {
+      font-size: 28px;
+      font-weight: bold;
+      color: #667eea;
+      font-family: monospace;
+      margin: 10px 0;
+    }
+
+    .copy-button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .copy-button:hover {
+      background: #764ba2;
+      transform: translateY(-2px);
+    }
+
+    .copy-button.copied {
+      background: #4caf50;
+    }
+
+    .share-buttons {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .share-btn {
+      flex: 1;
+      min-width: 150px;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .share-btn:hover {
+      border-color: #667eea;
+      background: #f5f7fa;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .referral-list {
+      margin-top: 20px;
+    }
+
+    .referral-item {
+      padding: 15px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .referral-item.completed {
+      background: #e8f5e9;
+      border-color: #4caf50;
+    }
+
+    .referral-item.pending {
+      background: #fff3cd;
+      border-color: #ffc107;
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-completed {
+      background: #4caf50;
+      color: white;
+    }
+
+    .status-pending {
+      background: #ffc107;
+      color: #333;
+    }
+
+    .referral-url {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      margin: 10px 0;
+    }
+
+    .reward-info {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    .reward-info strong {
+      color: #2e7d32;
+    }
+  </style>
+</head>
+<body>
+
+<div class="referral-container">
+  <a href="/dashboard" class="btn ghost" style="margin-bottom: 20px;">← Back to Dashboard</a>
+
+  <div class="referral-card">
+    <h2>🎁 Referral Program</h2>
+    <p>Invite friends and both of you get <strong>30 days of Premium access!</strong></p>
+
+    <!-- Reward Info -->
+    <div class="reward-info">
+      <strong>✅ How it works:</strong>
+      <br>1. Share your referral code with friends
+      <br>2. They sign up using your code
+      <br>3. You both get 30 days Premium
+      <br>4. Unlimited referrals = Unlimited Premium!
+    </div>
+
+    <!-- Referral Code -->
+    <div class="referral-code-box">
+      <p style="color: #666; margin: 0 0 10px 0;">Your Referral Code:</p>
+      <div class="referral-code" id="referralCode">{{ referral_code }}</div>
+      <button class="copy-button" onclick="copyCode()">📋 Copy Code</button>
+      
+      <p style="color: #999; font-size: 12px; margin: 15px 0 0 0;">Or share this link:</p>
+      <div class="referral-url" id="referralUrl">{{ referral_url }}</div>
+      <button class="copy-button" onclick="copyUrl()">🔗 Copy Link</button>
+    </div>
+
+    <!-- Share Buttons -->
+    <div class="share-buttons">
+      <button class="share-btn" onclick="shareWhatsApp()">💬 WhatsApp</button>
+      <button class="share-btn" onclick="shareTwitter()">𝕏 Twitter</button>
+      <button class="share-btn" onclick="shareEmail()">📧 Email</button>
+      <button class="share-btn" onclick="shareCopy()">📋 Copy</button>
+    </div>
+  </div>
+
+  <!-- Statistics -->
+  <div class="referral-card">
+    <h2>📊 Your Referrals</h2>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Total Referrals</div>
+        <div class="stat-number">{{ total_referrals }}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Pending</div>
+        <div class="stat-number">{{ pending_referrals }}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Premium Days Earned</div>
+        <div class="stat-number">{{ referrer_rewards * 30 }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Referral List -->
+  {% if total_referrals > 0 %}
+  <div class="referral-card">
+    <h2>👥 Your Referrals</h2>
+    <div class="referral-list">
+      {% for referral in user.referrals_given %}
+      <div class="referral-item {% if referral.status == 'completed' %}completed{% else %}pending{% endif %}">
+        <div>
+          <strong>{{ referral.referred.name }}</strong>
+          <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">
+            Referred on {{ referral.created_at.strftime('%b %d, %Y') }}
+          </p>
+        </div>
+        <span class="status-badge status-{{ referral.status }}">
+          {% if referral.status == 'completed' %}✅ Completed{% else %}⏳ Pending{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  function copyCode() {
+    const code = '{{ referral_code }}';
+    navigator.clipboard.writeText(code);
+    
+    const btn = event.target;
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('copied');
+    
+    setTimeout(() => {
+      btn.textContent = '📋 Copy Code';
+      btn.classList.remove('copied');
+    }, 2000);
+  }
+
+  function copyUrl() {
+    const url = '{{ referral_url }}';
+    navigator.clipboard.writeText(url);
+    
+    const btn = event.target;
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('copied');
+    
+    setTimeout(() => {
+      btn.textContent = '🔗 Copy Link';
+      btn.classList.remove('copied');
+    }, 2000);
+  }
+
+  function shareWhatsApp() {
+    const text = `Join BookExChelf! Track your reading with me 📚 We both get 30 days premium! ${window.location.origin}/signup?ref={{ referral_code }}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  function shareTwitter() {
+    const text = `I'm using @BookExChelf to track my reading 📚 Join me with code {{ referral_code }} and we both get 30 days premium!`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  function shareEmail() {
+    const subject = 'Join me on BookExChelf!';
+    const body = `Hi!\n\nI'm using BookExChelf to track my reading. You should join me!\n\nUse my referral code: {{ referral_code }}\n\nOr click here: ${window.location.origin}/signup?ref={{ referral_code }}\n\nWe both get 30 days of premium access!`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+
+  function shareCopy() {
+    copyUrl();
+  }
+</script>
+
+</body>
+</html>

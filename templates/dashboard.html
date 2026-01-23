@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bookex Chelf</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js for reading statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+
+
+
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <a href="javascript:history.back()" class="back-btn" aria-label="Go back">←</a>
+    <div class="logo">
+      <img src="{{ url_for('static', filename='image/logo.png') }}" alt="BookExChelf" class = "logo">
+    </div>
+    <div class="auth-buttons">
+      <a href="/logout" class="btn ghost">Log Out</a>
+      <a href="/profile" class="btn primary profile-btn" title="{{ session.get('user_name', 'Profile') }}">
+        {{ session.get('user_name', 'U')[0].upper() }}
+        {% if is_premium %}
+        <span class="premium-badge" title="Premium Member"><span class="premium-badge-crown">👑</span></span>
+        {% endif %}
+      </a>
+    </div>
+  </header>
+
+
+  <!-- HERO -->
+  <main class="container">
+    <h1 class="headline">
+      Excellerate <span>your reading</span>
+    </h1>
+
+    <p class="subtitle">
+      Track and organize your reading habit
+    </p>
+  </main>
+
+  <!-- Premium Status Banner -->
+  {% if is_premium %}
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 24px; margin: 20px 24px; border-radius: 12px; text-align: center;">
+      <p style="margin: 0; font-weight: 600;">👑 Premium Member</p>
+      <p style="margin: 5px 0 0 0; font-size: 14px;">{{ days_left }} days remaining in your premium access</p>
+    </div>
+  {% else %}
+    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px 24px; margin: 20px 24px; border-radius: 12px; text-align: center;">
+      <p style="margin: 0; font-weight: 600;">📋 Free Member</p>
+      <p style="margin: 5px 0 0 0; font-size: 14px;"><a href="/pricing" style="color: white; text-decoration: underline;">Upgrade to Premium</a> to unlock more features</p>
+    </div>
+  {% endif %}
+
+{% set colors = ['btn-blue', 'btn-green', 'btn-orange'] %}
+
+
+<!-- Monthly Report Notification Banner -->
+<div id="monthly-report-notification" style="display: none; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #333; padding: 20px 24px; margin: 20px 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(255, 165, 0, 0.3); animation: slideDown 0.5s ease;">
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+    <div style="flex: 1;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+        <span style="font-size: 32px;">🎉</span>
+        <h3 style="margin: 0; font-size: 20px; font-weight: 700;">Your Monthly Reading Report is Ready!</h3>
+      </div>
+      <p id="report-notification-message" style="margin: 0; font-size: 14px; opacity: 0.9;">
+        See how much you've accomplished this month
+      </p>
+    </div>
+    <a href="/monthly-report" style="background: #333; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; white-space: nowrap; transition: transform 0.2s ease;">
+      View Report →
+    </a>
+  </div>
+</div>
+<style>
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#monthly-report-notification a:hover {
+  transform: scale(1.05);
+}
+</style>
+
+
+    <!-- Active Reading Button -->
+    <div class="active-reading-section">
+      <a href="/active_reading" class="active-reading-btn">📖 Active Reading</a>
+    </div>
+
+
+    <!-- Dynamic shelf buttons -->
+<!-- Update the shelf container section in dashboard.html -->
+<section class="shelf-container">
+  {% for shelf in shelves %}
+    <div class="dashboard-shelf" 
+         data-url="{{ url_for('shelf_page', shelf_id=shelf.id) }}" 
+         data-id="{{ shelf.id }}"
+         style="background: #eaf6e8; color: #4b8f29; margin: 20px;">
+        <span class="shelf-text">{{ shelf.shelf_name }}</span>
+        <div class="shelf-actions">
+            <button class="rename-btn" data-shelf-id="{{ shelf.id }}">✏️</button>
+            <button class="delete-btn" data-shelf-id="{{ shelf.id }}">🗑</button>
+        </div>
+    </div>
+  {% else %}  
+    <p>No shelves available. Create one to get started!</p>
+  {% endfor %}
+</section>
+
+<!-- Error/Success Messages -->
+{% if error %}
+  <div style="background: #ffebee; border-left: 4px solid #f44336; padding: 15px 20px; margin: 20px 24px; border-radius: 4px;">
+    <p style="color: #c62828; margin: 0; font-weight: 600;">⚠️ {{ error }}</p>
+  </div>
+{% endif %}
+
+{% if success %}
+  <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px 20px; margin: 20px 24px; border-radius: 4px;">
+    <p style="color: #2e7d32; margin: 0; font-weight: 600;">✓ {{ success }}</p>
+  </div>
+{% endif %}
+
+<!-- Shelf Limit Info for Free Users -->
+{% if not is_premium and shelves|length >= 3 %}
+  <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px 20px; margin: 20px 24px; border-radius: 8px; text-align: center;">
+    <p style="color: #856404; margin: 0; font-weight: 600;">📦 You've reached the shelf limit (3/3)</p>
+    <p style="color: #856404; margin: 8px 0 0 0; font-size: 14px;">
+      <a href="/pricing" style="color: #856404; text-decoration: underline; font-weight: 600;">Upgrade to Premium</a> to create unlimited shelves
+    </p>
+  </div>
+{% endif %}
+
+<!-- Create Shelf Form -->
+{% if is_premium or shelves|length < 3 %}
+  <form method="POST" class="create-form">
+      <input type="text" name="shelf_name" required placeholder="Enter shelf name">
+      <button class="create-shelf" type="submit">Create Shelf</button>
+  </form>
+{% else %}
+  <div style="background: #f5f5f5; padding: 20px; margin: 20px 24px; border-radius: 8px; text-align: center;">
+    <p style="color: #666; margin: 0;">Upgrade to Premium to create more shelves</p>
+    <a href="/pricing" class="btn primary" style="margin-top: 10px; display: inline-block;">Upgrade Now</a>
+  </div>
+{% endif %}
+
+<!-- Reading Time Statistics Sidebar -->
+<aside class="reading-timer" style="position: fixed; right: 20px; top: 120px; width: 240px; z-index: 10;">
+  
+  <!-- Global Leaderboard -->
+  <div style="margin-bottom: 15px;">
+    <h3 style="font-size: 14px; margin: 0 0 10px 0;">🏆 Global Leaderboard</h3>
+    <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      {% for leader in leaderboard %}
+        <div style="padding: 10px; border-bottom: 1px solid #f0f0f0; {% if leader.is_premium %}background: linear-gradient(135deg, #FDD835 0%, #F4C430 100%);{% elif leader.is_current_user %}background: #f0f8ff;{% endif %}{% if leader.is_premium or leader.is_current_user %}font-weight: 600;{% endif %}">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <div style="flex: 1;">
+              <span style="font-size: 12px; color: {% if leader.is_premium %}#333{% else %}#666{% endif %};">{{ leader.rank }}.</span>
+              <span style="font-size: 13px; font-weight: 600; margin-left: 4px; color: {% if leader.is_premium %}#333{% else %}#000{% endif %};">{{ leader.name }}</span>
+              {% if leader.is_current_user %}<span style="font-size: 11px; background: #667eea; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 4px;">You</span>{% endif %}
+            </div>
+            <span style="font-size: 12px; color: {% if leader.is_premium %}#333{% else %}#667eea{% endif %}; font-weight: 600;">{{ leader.daily_hours }}h {{ leader.daily_minutes }}m</span>
+          </div>
+        </div>
+      {% endfor %}
+      
+      {% if user_rank and user_rank > 6 %}
+        <div style="padding: 10px; border-top: 2px solid #667eea; background: #f0f8ff;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 600;">
+            <div style="flex: 1;">
+              <span style="font-size: 12px; color: #667eea;">#{{ user_rank }}</span>
+              <span style="font-size: 13px; margin-left: 4px;">{{ session.get('user_name', 'You') }}</span>
+              <span style="font-size: 11px; background: #667eea; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 4px;">You</span>
+            </div>
+            <span style="font-size: 12px; color: #667eea;">{{ time_stats.daily_hours }}h {{ time_stats.daily_minutes }}m</span>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <h2 style="font-size: 14px; margin: 12px 0 8px 0;">⏱️ Reading Stats</h2>
+  
+  <!-- Daily Time -->
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 8px; border-radius: 8px; color: white; text-align: center;">
+    <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; margin-bottom: 3px;">Today</div>
+    <div style="font-size: 18px; font-weight: 700;">
+      <span id="daily-hours">{{ time_stats.daily_hours }}</span>h <span id="daily-minutes">{{ time_stats.daily_minutes }}</span>m
+    </div>
+  </div>
+</aside>
+
+
+
+
+<!-- Reading Statistics Chart -->
+{% if is_premium %}
+<section class="reading-stats-section">
+  <h2>📊 Your Reading Statistics</h2>
+  <div class="chart-container">
+    <canvas id="readingStatsChart"></canvas>
+  </div>
+  <div id="readingStatsLabels"></div>
+</section>
+{% else %}
+<!-- Premium Upgrade CTA for Statistics -->
+<section style="margin: 40px 24px; padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; text-align: center; color: white;">
+  <h2 style="font-size: 28px; margin-bottom: 15px;">📊 Unlock Reading Analytics</h2>
+  <p style="font-size: 16px; margin-bottom: 25px; opacity: 0.95;">Get detailed insights into your reading habits with premium statistics</p>
+  <ul style="list-style: none; padding: 0; margin: 20px 0; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;">
+    <li style="margin-bottom: 12px; padding-left: 30px; position: relative;">
+      <span style="position: absolute; left: 0;">✓</span>
+      Visual reading progress charts
+    </li>
+    <li style="margin-bottom: 12px; padding-left: 30px; position: relative;">
+      <span style="position: absolute; left: 0;">✓</span>
+      Completion rate analytics
+    </li>
+  </ul>
+  <a href="/pricing" class="btn" style="background: white; color: #667eea; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block; margin-top: 10px;">
+    Upgrade to Premium
+  </a>
+</section>
+{% endif %}
+
+
+
+
+<!-- Reading Analytics Chart Section -->
+{% if reading_stats and reading_stats.total_books > 0 %}
+<section style="margin: 40px 24px; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+  <h2 style="text-align: center; margin-bottom: 30px; font-size: 24px; color: #333;">📊 Reading Analytics</h2>
+  
+  <!-- Concentric Circle Chart -->
+  <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 40px;">
+    <svg width="400" height="400" viewBox="0 0 400 400" style="max-width: 100%; height: auto;" id="reading-chart">
+      <!-- Outer circle (incomplete) - Ring 3 -->
+      <circle cx="200" cy="200" r="160" fill="none" stroke="#e0e0e0" stroke-width="20" />
+      <circle cx="200" cy="200" r="160" fill="none" stroke="#ff9800" stroke-width="20" 
+              id="incomplete-ring"
+              transform="rotate(-90 200 200)" />
+      
+      <!-- Middle circle (active) - Ring 2 -->
+      <circle cx="200" cy="200" r="120" fill="none" stroke="#e0e0e0" stroke-width="18" />
+      <circle cx="200" cy="200" r="120" fill="none" stroke="#2196f3" stroke-width="18" 
+              id="active-ring"
+              transform="rotate(-90 200 200)" />
+      
+      <!-- Inner circle (completed) - Ring 1 -->
+      <circle cx="200" cy="200" r="80" fill="none" stroke="#e0e0e0" stroke-width="16" />
+      <circle cx="200" cy="200" r="80" fill="none" stroke="#4caf50" stroke-width="16" 
+              id="completed-ring"
+              transform="rotate(-90 200 200)" />
+      
+      <!-- Center circle with total books -->
+      <circle cx="200" cy="200" r="50" fill="#667eea" />
+      <text x="200" y="200" text-anchor="middle" dominant-baseline="middle" 
+            style="font-size: 32px; font-weight: bold; fill: white;">
+        {{ reading_stats.total_books }}
+      </text>
+      <text x="200" y="225" text-anchor="middle" dominant-baseline="middle" 
+            style="font-size: 14px; fill: white;">
+        Books
+      </text>
+    </svg>
+  </div>
+  
+  <script>
+    // Calculate and set stroke-dasharray and stroke-dashoffset for each ring
+    (function() {
+      const completedPercent = {{ reading_stats.completed_percentage }};
+      const activePercent = {{ reading_stats.active_percentage }};
+      const incompletePercent = {{ reading_stats.incomplete_percentage }};
+      
+      // Inner ring (completed) - radius 80
+      const r1 = 80;
+      const circumference1 = 2 * Math.PI * r1;
+      const completedRing = document.getElementById('completed-ring');
+      if (completedRing) {
+        completedRing.setAttribute('stroke-dasharray', circumference1);
+        completedRing.setAttribute('stroke-dashoffset', circumference1 * (1 - completedPercent / 100));
+      }
+      
+      // Middle ring (active) - radius 120
+      const r2 = 120;
+      const circumference2 = 2 * Math.PI * r2;
+      const activeRing = document.getElementById('active-ring');
+      if (activeRing) {
+        activeRing.setAttribute('stroke-dasharray', circumference2);
+        activeRing.setAttribute('stroke-dashoffset', circumference2 * (1 - activePercent / 100));
+      }
+      
+      // Outer ring (incomplete) - radius 160
+      const r3 = 160;
+      const circumference3 = 2 * Math.PI * r3;
+      const incompleteRing = document.getElementById('incomplete-ring');
+      if (incompleteRing) {
+        incompleteRing.setAttribute('stroke-dasharray', circumference3);
+        incompleteRing.setAttribute('stroke-dashoffset', circumference3 * (1 - incompletePercent / 100));
+      }
+    })();
+  </script>
+  
+  <!-- Labels Section -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px;">
+    <!-- Completed Books -->
+    <div style="text-align: center; padding: 15px; background: #e8f5e9; border-radius: 8px; border: 2px solid #4caf50;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+        <div style="width: 16px; height: 16px; background: #4caf50; border-radius: 50%;"></div>
+        <span style="font-size: 14px; color: #2e7d32; font-weight: 600;">Completed Books</span>
+      </div>
+      <div style="font-size: 28px; font-weight: bold; color: #4caf50;">{{ reading_stats.completed_count }}</div>
+      <div style="font-size: 12px; color: #666; margin-top: 5px;">{{ reading_stats.completed_percentage }}% of total</div>
+    </div>
+    
+    <!-- Active Reading -->
+    <div style="text-align: center; padding: 15px; background: #e3f2fd; border-radius: 8px; border: 2px solid #2196f3;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+        <div style="width: 16px; height: 16px; background: #2196f3; border-radius: 50%;"></div>
+        <span style="font-size: 14px; color: #1565c0; font-weight: 600;">Active Reading</span>
+      </div>
+      <div style="font-size: 28px; font-weight: bold; color: #2196f3;">{{ reading_stats.active_count }}</div>
+      <div style="font-size: 12px; color: #666; margin-top: 5px;">{{ reading_stats.active_percentage }}% of total</div>
+    </div>
+    
+    <!-- Incomplete Books -->
+    <div style="text-align: center; padding: 15px; background: #fff3e0; border-radius: 8px; border: 2px solid #ff9800;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+        <div style="width: 16px; height: 16px; background: #ff9800; border-radius: 50%;"></div>
+        <span style="font-size: 14px; color: #e65100; font-weight: 600;">Incomplete Books</span>
+      </div>
+      <div style="font-size: 28px; font-weight: bold; color: #ff9800;">{{ reading_stats.incomplete_count }}</div>
+      <div style="font-size: 12px; color: #666; margin-top: 5px;">{{ reading_stats.incomplete_percentage }}% of total</div>
+    </div>
+    
+    <!-- Unread Books -->
+    <div style="text-align: center; padding: 15px; background: #f5f5f5; border-radius: 8px; border: 2px solid #9e9e9e;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+        <div style="width: 16px; height: 16px; background: #9e9e9e; border-radius: 50%;"></div>
+        <span style="font-size: 14px; color: #616161; font-weight: 600;">Unread Books</span>
+      </div>
+      <div style="font-size: 28px; font-weight: bold; color: #9e9e9e;">{{ reading_stats.unread_count }}</div>
+      <div style="font-size: 12px; color: #666; margin-top: 5px;">Not started yet</div>
+    </div>
+  </div>
+
+  <!-- Summary Stats Row -->
+  <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: center;">
+      <div>
+        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Total Books</div>
+        <div style="font-size: 32px; font-weight: bold;">{{ reading_stats.total_books }}</div>
+      </div>
+      <div>
+        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Completion Rate</div>
+        <div style="font-size: 32px; font-weight: bold;">{{ reading_stats.completed_percentage }}%</div>
+      </div>
+      <div>
+        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Books in Progress</div>
+        <div style="font-size: 32px; font-weight: bold;">{{ reading_stats.active_count + reading_stats.incomplete_count }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-section">
+      <h4>About Bookex Chelf</h4>
+      <p>Your personal reading companion to track, organize, and manage your reading habits.</p>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/logout">Log Out</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Information</h4>
+      <ul>
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Terms of Service</a></li>
+        <li><a href="mailto:bookexshelf@gmail.com">Contact Us</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Connect With Us</h4>
+      <ul>
+        <li><a href="https://www.reddit.com/r/BookExChelf/">Reddit</a></li>
+        <li><a href="https://whatsapp.com/channel/0029VbCJaZM1t90fKSEfHN1v">Whatsapp</a></li>
+        <li><a href="https://www.instagram.com/bookex_chelf/">Instagram</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>&copy; 2026 Bookex Chelf. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const shelves = document.querySelectorAll('.dashboard-shelf');
+    let longPressTimer;
+    let isLongPress = false;
+
+    shelves.forEach(shelf => {
+        // Long press event
+        shelf.addEventListener('mousedown', function(e) {
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                showShelfActions(this);
+            }, 500); // 500ms long press
+        });
+
+        // Mouse up event
+        shelf.addEventListener('mouseup', function(e) {
+            clearTimeout(longPressTimer);
+            // If not a long press, redirect (but not if clicking buttons)
+            if (!isLongPress && e.target.tagName !== 'BUTTON') {
+                const url = this.dataset.url;
+                if (url) {
+                    window.location.href = url;
+                }
+            }
+        });
+
+        // Mouse leave event
+        shelf.addEventListener('mouseleave', function() {
+            clearTimeout(longPressTimer);
+        });
+
+        // Touch events for mobile
+        shelf.addEventListener('touchstart', function(e) {
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                showShelfActions(this);
+            }, 500);
+        });
+
+        shelf.addEventListener('touchend', function() {
+            clearTimeout(longPressTimer);
+        });
+
+        // Rename button click
+        const renameBtn = shelf.querySelector('.rename-btn');
+        if (renameBtn) {
+            renameBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const shelfId = this.dataset.shelfId;
+                const shelfNameElement = shelf.querySelector('.shelf-text');
+                const currentName = shelfNameElement.textContent;
+                
+                const newName = prompt('Enter new shelf name:', currentName);
+                if (newName && newName.trim() !== '') {
+                    renameShelf(shelfId, newName);
+                }
+            });
+        }
+
+        // Delete button click
+        const deleteBtn = shelf.querySelector('.delete-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const shelfId = this.dataset.shelfId;
+                if (confirm('Are you sure you want to delete this shelf?')) {
+                    deleteShelf(shelfId);
+                }
+            });
+        }
+    });
+
+    function showShelfActions(shelf) {
+        // Hide all other shelves' actions
+        shelves.forEach(s => {
+            if (s !== shelf) {
+                s.classList.remove('active');
+            }
+        });
+        // Toggle current shelf's actions
+        shelf.classList.toggle('active');
+    }
+
+    // Hide actions when clicking elsewhere
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dashboard-shelf')) {
+            shelves.forEach(shelf => {
+                shelf.classList.remove('active');
+            });
+        }
+    });
+
+    // Rename shelf function
+    async function renameShelf(shelfId, newName) {
+        try {
+            const response = await fetch('/rename_shelf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: shelfId,
+                    name: newName
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to rename shelf: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while renaming the shelf.');
+        }
+    }
+
+    // Delete shelf function
+    async function deleteShelf(shelfId) {
+        try {
+            const response = await fetch('/delete_shelf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: shelfId
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to delete shelf: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the shelf.');
+        }
+    }
+});
+
+// Time tracking
+document.addEventListener('DOMContentLoaded', function() {
+  // Track time every minute (60000 ms)
+  setInterval(function() {
+    fetch('/api/track-time', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.stats) {
+        // Update time stats on the page
+        document.getElementById('daily-hours').textContent = data.stats.daily_hours;
+        document.getElementById('daily-minutes').textContent = data.stats.daily_minutes;
+        document.getElementById('yearly-hours').textContent = data.stats.yearly_hours;
+        document.getElementById('yearly-minutes').textContent = data.stats.yearly_minutes;
+        document.getElementById('total-hours').textContent = data.stats.total_hours;
+        document.getElementById('total-minutes').textContent = data.stats.total_minutes;
+        console.log('Time tracked:', data.stats);
+      }
+    })
+    .catch(error => console.error('Error tracking time:', error));
+  }, 60000); // Every 60 seconds
+});
+
+
+
+
+
+// Check if user should see monthly report notification
+document.addEventListener('DOMContentLoaded', function() {
+  // Check on page load
+  checkMonthlyReportStatus();
+  
+  // Check every 5 minutes
+  setInterval(checkMonthlyReportStatus, 5 * 60 * 1000);
+});
+
+function checkMonthlyReportStatus() {
+  fetch('/api/check-monthly-report')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.show_notification) {
+        const notification = document.getElementById('monthly-report-notification');
+        const message = document.getElementById('report-notification-message');
+        
+        if (notification && message) {
+          message.textContent = data.message;
+          notification.style.display = 'block';
+        }
+      }
+    })
+    .catch(error => console.error('Error checking report status:', error));
+}
+</script>
+</body>
+
+</html>
+
+
+

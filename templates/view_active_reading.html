@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Books Collection - Bookex Chelf</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='image/logo.png') }}" alt="BookExChelf" class = "logo">
+    </div>
+    <div class="auth-buttons">
+      {% if session.get('user_id') %}
+        <a href="/logout" class="btn ghost">Log Out</a>
+        <a href="/profile" class="btn primary profile-btn" title="{{ session.get('user_name', 'Profile') }}">
+          {{ session.get('user_name', 'U')[0].upper() }}
+          {% if is_premium %}
+          <span class="premium-badge" title="Premium Member"><span class="premium-badge-crown">👑</span></span>
+          {% endif %}
+        </a>
+      {% else %}
+        <a href="/signin" class="btn ghost">Sign In</a>
+        <a href="/signup" class="btn primary">Sign Up</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <main class="container">
+    <h1 class="headline">
+      <span>Books Collection</span>
+    </h1>
+
+    <p class="subtitle">
+      Overview of all your books and reading progress
+    </p>
+  </main>
+
+  <!-- COLLECTION TABLE -->
+  <div class="collection-container">
+    <!-- Completed Books Table -->
+    <div class="collection-section">
+      <h2 class="section-title">Current Reading</h2>
+      <table class="collection-table">
+        <thead>
+          <tr>
+            <th>Book Name</th>
+            <th>Total Pages</th>
+            <th>Current Page</th>
+            <th>Start Date</th>
+            <th>Target Date</th>
+            <th>Days Left</th>
+            <th>Progress</th>
+            <th>File</th>
+            <th>External Link</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+                <tr>
+                <td><strong>{{ book.book_name }}</strong></td>
+                <td>{{ book.total_pages or "N/A" }}</td>
+                <td>{{ book.current_page or "N/A" }}</td>
+                <td>{{ book.start_date.strftime('%Y-%m-%d') if book.start_date else 'N/A' }}</td>
+                <td>{{ book.target_date.strftime('%Y-%m-%d') if book.target_date else 'N/A' }}</td>
+                <td>
+                    {% if book.target_date %}
+                    {{ (book.target_date - book.today_date).days }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </td>
+                <td>
+                    {% if book.total_pages and book.current_page %}
+                    <div class="progress-bar">
+                        <div class="progress-fill"
+                            style="width: {{ (book.current_page / book.total_pages) * 100 }}%">
+                        </div>
+                    </div>
+                    <span class="progress-text">
+                        {{ ((book.current_page / book.total_pages) * 100) | round(1) }}%
+                    </span>
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if book.file_path %}
+                    <a href="{{ url_for('serve_uploaded_file', filename=book.file_path) }}"
+                        target="_blank"
+                        class="table-link">📎 View</a>
+                    {% else %}
+                    No file
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if book.external_link %}
+                    <a href="{{ book.external_link }}"
+                        target="_blank"
+                        class="table-link">🔗 Open</a>
+                    {% else %}
+                    No link
+                    {% endif %}
+                </td>
+                </tr>
+            {% else %}
+                <tr>
+                <td colspan="9" class="no-data">No active books yet</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+
+      </table>
+    </div>
+
+
+ 
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-section">
+      <h4>About Bookex Chelf</h4>
+      <p>Your personal reading companion to track, organize, and manage your reading habits.</p>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/logout">Log Out</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Information</h4>
+      <ul>
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Terms of Service</a></li>
+        <li><a href="mailto:bookexshelf@gmail.com">Contact Us</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section">
+      <h4>Connect With Us</h4>
+      <ul>
+        <li><a href="https://www.reddit.com/r/BookExChelf/">Reddit</a></li>
+        <li><a href="https://whatsapp.com/channel/0029VbCJaZM1t90fKSEfHN1v">Whatsapp</a></li>
+        <li><a href="https://www.instagram.com/bookex_chelf/">Instagram</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>&copy; 2026 Bookex Chelf. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

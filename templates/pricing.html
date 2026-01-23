@@ -1,0 +1,244 @@
+
+<!-- templates/pricing.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upgrade to Premium</title>
+    <style>
+        .pricing-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .plans {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .plan {
+            flex: 1;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+        }
+        .plan.premium {
+            border-color: #ffc107;
+            background: #fff9e6;
+        }
+        .price {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .features {
+            text-align: left;
+            margin: 20px 0;
+        }
+        .btn-upgrade {
+            background: #ffc107;
+            color: #000;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-upgrade:hover {
+            background: #e0a800;
+        }
+    </style>
+</head>
+<body>
+    <div class="pricing-container">
+        <h1>Upgrade to Premium</h1>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        <div class="alert alert-info">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <p>Unlock all premium features and enhance your reading experience.</p>
+        
+        <div class="plans">
+            <!-- Free Plan -->
+            <div class="plan free">
+                <h2>Free Plan</h2>
+                <div class="price">$0<span>/month</span></div>
+                <div class="features">
+                    {% for feature in free_features %}
+                    <p>✓ {{ feature }}</p>
+                    {% endfor %}
+                </div>
+                {% if user and not user.is_premium %}
+                <p><strong>Your Current Plan</strong></p>
+                {% endif %}
+            </div>
+            
+            <!-- Premium Plan -->
+            <div class="plan premium">
+                <h2>Premium Plan</h2>
+                <div class="price">$4.99<span>/month</span></div>
+                <div class="features">
+                    {% for feature in premium_features %}
+                    <p>⭐ {{ feature }}</p>
+                    {% endfor %}
+                </div>
+                
+                {% if user %}
+                    {% if user.is_premium %}
+                        <div class="current-status">
+                            <p>✅ You are already a Premium member!</p>
+                            <a href="/dashboard" class="btn-upgrade">Go to Dashboard</a>
+                        </div>
+                    {% else %}
+                        <!-- Payment Options -->
+                        <div class="payment-options">
+                            <h3>Choose Payment Method (India):</h3>
+                            
+                            <!-- Razorpay (India - UPI/Cards/Netbanking) -->
+                            <button id="razorpay-btn" class="btn-upgrade">
+                                🇮🇳 Pay with UPI/Card (Razorpay)
+                            </button>
+                            
+                            <!-- Manual Payment -->
+                            <a href="/upgrade/manual" class="btn-upgrade" style="display: block; margin: 10px 0;">
+                                📱 Manual Payment (UPI/Bank Transfer)
+                            </a>
+                            
+                            <!-- For Testing Only -->
+                            {% if config.DEBUG %}
+                            <form action="/upgrade/test" method="POST" style="margin-top: 20px;">
+                                <button type="submit" class="btn-test" style="background: #28a745; color: white; padding: 10px; border: none; border-radius: 5px;">
+                                    🧪 TEST: Activate Premium (Debug Mode)
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p>Please <a href="/signin">login</a> to upgrade.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Razorpay Script -->
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        <script>
+        let currentPricing = {{ pricing | tojson }};
+
+        // Detect country from timezone
+        function detectCountry() {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            
+            if (timezone.includes('Kolkata') || timezone.includes('Calcutta')) return 'IN';
+            if (timezone.includes('New_York') || timezone.includes('Chicago') || 
+                timezone.includes('Los_Angeles') || timezone.includes('Denver')) return 'US';
+            if (timezone.includes('London')) return 'GB';
+            
+            return 'DEFAULT';
+        }
+
+        // Load pricing on page load
+        async function loadPricing() {
+            const country = detectCountry();
+            
+            try {
+                const response = await fetch('/get-pricing', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ country: country })
+                });
+                
+                currentPricing = await response.json();
+                
+                // Update display
+                const priceElement = document.querySelector('.premium .price');
+                if (priceElement) {
+                    priceElement.innerHTML = `${currentPricing.display}<span>/month</span>`;
+                }
+                
+                console.log('Loaded pricing:', currentPricing);
+                
+            } catch (error) {
+                console.error('Error loading pricing:', error);
+            }
+        }
+
+        // Razorpay payment
+        var razorpayBtn = document.getElementById('razorpay-btn');
+        if (razorpayBtn) {
+            razorpayBtn.addEventListener('click', async function() {
+                const country = detectCountry();
+                
+                try {
+                    const response = await fetch('/create-razorpay-order', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ country: country })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        alert(data.error || 'Payment failed');
+                        return;
+                    }
+                    
+                    var options = {
+                        "key": data.key,
+                        "amount": data.amount,
+                        "currency": data.currency,
+                        "order_id": data.order_id,
+                        "name": "BookEx Chelf Premium",
+                        "description": `${data.days} Days Premium Access`,
+                        "handler": async function(response) {
+                            try {
+                                const verifyResponse = await fetch('/verify-razorpay-payment', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_signature: response.razorpay_signature,
+                                        days: data.days
+                                    })
+                                });
+                                
+                                const result = await verifyResponse.json();
+                                
+                                if (result.success) {
+                                    alert(`🎉 ${result.message}`);
+                                    window.location.href = '/dashboard';
+                                } else {
+                                    alert('Payment verification failed: ' + (result.error || 'Unknown error'));
+                                }
+                            } catch (error) {
+                                alert('Error verifying payment: ' + error.message);
+                            }
+                        },
+                        "theme": { "color": "#ffc107" }
+                    };
+                    
+                    var rzp = new Razorpay(options);
+                    rzp.open();
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        }
+
+        // Load pricing when page loads
+        window.addEventListener('DOMContentLoaded', loadPricing);
+        </script>
+    </div>
+</body>
+</html>
