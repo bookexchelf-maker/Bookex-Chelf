@@ -36,6 +36,8 @@ import random
 import string
 from datetime import timedelta
 import json
+import boto3
+from botocore.exceptions import ClientError
 import sib_api_v3_sdk
 from sib_api_v3_sdk.rest import ApiException
 
