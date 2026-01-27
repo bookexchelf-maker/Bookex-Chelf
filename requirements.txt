@@ -32,3 +32,6 @@ user-agents==2.2.0
 waitress==3.0.2
 Werkzeug==3.1.5
 sib-api-v3-sdk
+boto3
+botocore
+sib-api-v3-sdk
