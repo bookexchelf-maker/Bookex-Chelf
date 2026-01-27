@@ -4,6 +4,13 @@ Script to create a freemium test user (no premium) for Bookex Chelf
 This version skips email verification for quick testing
 """
 
+
+
+
+
+from models.book import User, Shelf, Book
+from app import db
+
 from app import app, db
 from models.book import User, EmailVerificationOTP
 from datetime import datetime
@@ -21,10 +28,10 @@ def create_freemium_user():
         
         # Create new freemium user (free tier - not premium)
         freemium_user = User(
-            name="Freemium Test User",
-            email="freemium@test.com"
+            name="Test User 2",
+            email="freeuser@test.com"
         )
-        freemium_user.set_password("test1234")
+        freemium_user.set_password("12345678")
         freemium_user.is_premium = False  # Free tier user
         freemium_user.is_email_verified = True  # Mark as verified (skip email verification)
         freemium_user.email_verified_at = datetime.utcnow()
@@ -112,3 +119,10 @@ if __name__ == "__main__":
     print("\n" + "=" * 70)
     print("Ready for testing!")
     print("=" * 70)
+
+
+
+
+
+
+

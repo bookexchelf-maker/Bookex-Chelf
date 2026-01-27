@@ -445,7 +445,7 @@ function addGoalTrackingStyles() {
             z-index: 10;
         }
         
-        .rename-btn, .delete-btn, .start-reading-btn {
+        .rename-btn, .delete-btn,.move-shelf-btn, .start-reading-btn {
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid #ddd;
             cursor: pointer;
@@ -455,7 +455,7 @@ function addGoalTrackingStyles() {
             transition: all 0.2s;
         }
         
-        .rename-btn:hover, .delete-btn:hover, .start-reading-btn:hover {
+        .rename-btn:hover, .delete-btn:hover,.move-shelf-btn, .start-reading-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
@@ -465,6 +465,11 @@ function addGoalTrackingStyles() {
             border-color: #ffc107;
         }
         
+        .move-shelf-btn {
+            color: #ffc107;
+            border-color: #ffc107;
+        }
+
         .delete-btn {
             color: #dc3545;
             border-color: #dc3545;
@@ -657,4 +662,19 @@ function createStatsLabels(stats) {
             </div>
         </div>
     `;
+}
+
+
+// In profile.html import form
+if (data.success) {
+  // First import books
+  // Then process them
+  fetch('/process-imported-books', {
+    method: 'POST'
+  })
+  .then(r => r.json())
+  .then(processData => {
+    alert(`${data.books_imported} imported, ${processData.moved_count} moved to Active Reading!`);
+    window.location.href = '/dashboard';
+  });
 }

@@ -1,4 +1,4 @@
-from models.book import db, User, Shelf, Book, ReferralCode, Referral, EmailVerificationOTP, UserDailyProgress
+from models.book import db, User, Shelf, Book, ReferralCode, Referral, EmailVerificationOTP, UserDailyProgress, ActiveSession
 
 
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory, session
@@ -36,6 +36,10 @@ import random
 import string
 from datetime import timedelta
 import json
+import boto3
+from botocore.exceptions import ClientError
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 
 
 
@@ -46,11 +50,35 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = os.getenv("SECRET_KEY", "fallback-secret-key")  # Use fallback for development
 
+
+# ============ INITIALIZE SCHEDULER BREVO KEY ============
+
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
+
+
+# ============ INITIALIZE SCHEDULER (BEFORE ADDING JOBS) ============
+scheduler = BackgroundScheduler()
+scheduler.start()
+
+
 # Initialize Razorpay (India payments only)
 razorpay_client = razorpay.Client(auth=(
     os.getenv("RAZORPAY_KEY_ID", "rzp_test_dummy"),
     os.getenv("RAZORPAY_KEY_SECRET", "dummy_secret")
 ))
+
+
+
+
+#Initialize aws_access_key_id
+# Initialize AWS SES client
+ses_client = boto3.client(
+    'ses',
+    region_name=os.getenv('AWS_SES_REGION', 'us-east-1'),
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
+)
+
 
 # Initialize Flask-Mail
 mail = Mail(app)
@@ -249,10 +277,20 @@ def signin():
             user.last_login = datetime.utcnow()
             user.reset_daily_time_if_needed()
             user.reset_yearly_time_if_needed()
+            
+
+            # ✅ Create active session
+            session_id = str(uuid.uuid4())
+            active_session = ActiveSession(
+                user_id=user.id,
+                session_id=session_id
+            )
+            db.session.add(active_session)
             db.session.commit()
             
             session["user_id"] = user.id
             session["user_name"] = user.name
+            session["session_id"] = session_id
             session["login_time"] = datetime.utcnow().isoformat()  # Track session start
             return redirect(url_for("dashboard"))
         return render_template("signin.html", error="Invalid email or password")
@@ -542,73 +580,121 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 
+
+
 def send_otp_email(email, otp_code, username):
-    """Send OTP email to user using Flask-Mail"""
+    """Send OTP email to user using Brevo"""
     try:
-        msg = Message(
-            subject='🔐 Your BookEx Chelf Email Verification Code',
-            recipients=[email],
-            html=f"""
-            <html>
-                <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">
-                        
-                        <!-- Header -->
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <h1 style="color: #667eea; margin: 0; font-size: 28px;">📚 BookEx Chelf</h1>
-                            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Your Personal Reading Companion</p>
-                        </div>
-                        
-                        <!-- Main Content -->
-                        <div style="background: white; padding: 30px; border-radius: 8px;">
-                            <h2 style="color: #333; margin-top: 0;">Hi <strong>{username}</strong>,</h2>
-                            
-                            <p style="color: #555; font-size: 16px;">
-                                Welcome to BookEx Chelf! To complete your registration, please verify your email address using the code below:
-                            </p>
-                            
-                            <!-- OTP Code Display -->
-                            <div style="text-align: center; margin: 30px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 8px;">
-                                <p style="margin: 0; color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Your Verification Code</p>
-                                <p style="font-size: 48px; font-weight: bold; color: white; letter-spacing: 8px; margin: 15px 0; font-family: 'Courier New', monospace;">
-                                    {otp_code}
-                                </p>
-                            </div>
-                            
-                            <!-- Info -->
-                            <div style="background: #f0f4ff; border-left: 4px solid #667eea; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                                <p style="color: #667eea; margin: 0; font-weight: 600;">⏰ This code expires in 10 minutes</p>
-                            </div>
-                            
-                            <p style="color: #666; font-size: 14px; line-height: 1.8;">
-                                • Don't share this code with anyone<br>
-                                • If you didn't request this code, you can safely ignore this email<br>
-                                • Each code can only be used once
-                            </p>
-                            
-                            <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 25px 0;">
-                            
-                            <!-- Footer -->
-                            <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
-                                BookEx Chelf Team<br>
-                                <a href="https://bookexchelf.com" style="color: #667eea; text-decoration: none;">Visit our website</a>
-                            </p>
-                        </div>
+        sender_email = os.getenv('AWS_SES_EMAIL', 'bookexchelf@gmail.com')
+        
+        # Email subject
+        subject = '🔐 Your BookEx Chelf Email Verification Code'
+        
+        # Email body (HTML)
+        html_body = f"""
+        <html>
+            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">
+                    
+                    <!-- Header -->
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: #667eea; margin: 0; font-size: 28px;">📚 BookEx Chelf</h1>
+                        <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Your Personal Reading Companion</p>
                     </div>
-                </body>
-            </html>
-            """
+                    
+                    <!-- Main Content -->
+                    <div style="background: white; padding: 30px; border-radius: 8px;">
+                        <h2 style="color: #333; margin-top: 0;">Hi <strong>{username}</strong>,</h2>
+                        
+                        <p style="color: #555; font-size: 16px;">
+                            Welcome to BookEx Chelf! To complete your registration, please verify your email address using the code below:
+                        </p>
+                        
+                        <!-- OTP Code Display -->
+                        <div style="text-align: center; margin: 30px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 8px;">
+                            <p style="margin: 0; color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Your Verification Code</p>
+                            <p style="font-size: 48px; font-weight: bold; color: white; letter-spacing: 8px; margin: 15px 0; font-family: 'Courier New', monospace;">
+                                {otp_code}
+                            </p>
+                        </div>
+                        
+                        <!-- Info -->
+                        <div style="background: #f0f4ff; border-left: 4px solid #667eea; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                            <p style="color: #667eea; margin: 0; font-weight: 600;">⏰ This code expires in 10 minutes</p>
+                        </div>
+                        
+                        <p style="color: #666; font-size: 14px; line-height: 1.8;">
+                            • Don't share this code with anyone<br>
+                            • If you didn't request this code, you can safely ignore this email<br>
+                            • Each code can only be used once
+                        </p>
+                        
+                        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 25px 0;">
+                        
+                        <!-- Footer -->
+                        <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+                            BookEx Chelf Team<br>
+                            <a href="https://bookexchelf.com" style="color: #667eea; text-decoration: none;">Visit our website</a>
+                        </p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        """
+        
+        # Plain text version (fallback)
+        text_body = f"""
+        Welcome to BookEx Chelf!
+        
+        Your verification code is: {otp_code}
+        
+        This code expires in 10 minutes.
+        
+        Don't share this code with anyone.
+        If you didn't request this code, you can safely ignore this email.
+        
+        - BookEx Chelf Team
+        """
+        
+
+                # Configure Brevo API
+        configuration = sib_api_v3_sdk.Configuration()
+        configuration.api_key['api-key'] = BREVO_API_KEY
+
+        # Send email using Brevo API
+        api_instance = sib_api_v3_sdk.TransactionalEmailsApi()
+        api_instance.api_client.configuration = configuration
+
+        
+        send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+            to=[{"email": email, "name": username}],
+            sender={"email": sender_email, "name": "BookEx Chelf"},
+            subject=subject,
+            html_content=html_body,
+            text_content=text_body
         )
         
-        mail.send(msg)
+        response = api_instance.send_transac_email(send_smtp_email)
+        
         print(f"✅ OTP email sent successfully to {email}")
+        print(f"Message ID: {response.message_id}")
         return True
+        
+    except ApiException as e:
+        print(f"❌ Brevo API Error: {e}")
+        print(f"   Status: {e.status}")
+        print(f"   Reason: {e.reason}")
+        return False
         
     except Exception as e:
         print(f"❌ Error sending OTP email: {e}")
         import traceback
         traceback.print_exc()
         return False
+
+
+
+        
 # At the end of your signup route, before session['user_id'] = user.id, add:
 
 
@@ -625,9 +711,6 @@ import requests
 @app.route('/import-goodreads', methods=['POST'])
 @login_required
 def import_goodreads():
-    """
-    Import books from Goodreads RSS feed
-    """
     try:
         user_id = session.get('user_id')
         user = db.session.get(User, user_id)
@@ -733,6 +816,63 @@ def import_goodreads():
 
 
 
+@app.route('/process-imported-books', methods=['POST'])
+@login_required
+def process_imported_books():
+    """Move imported books to appropriate shelves based on status"""
+    try:
+        user_id = session.get('user_id')
+        
+        # Get imported shelf
+        imported_shelf = Shelf.query.filter_by(
+            shelf_name="Imported",
+            user_id=user_id
+        ).first()
+        
+        if not imported_shelf:
+            return jsonify(success=False, error="Imported shelf not found"), 404
+        
+        # Get all active books in imported shelf
+        active_books = Book.query.filter_by(
+            shelf_id=imported_shelf.id,
+            status='active'
+        ).all()
+        
+        # Create "Active Reading" shelf if doesn't exist
+        active_shelf = Shelf.query.filter_by(
+            shelf_name="Active Reading",
+            user_id=user_id
+        ).first()
+        
+        if not active_shelf:
+            active_shelf = Shelf(
+                shelf_name="Active Reading",
+                user_id=user_id
+            )
+            db.session.add(active_shelf)
+            db.session.commit()
+        
+        # Move active books to Active Reading shelf
+        moved_count = 0
+        for book in active_books:
+            book.shelf_id = active_shelf.id
+            moved_count += 1
+        
+        db.session.commit()
+        
+        return jsonify(
+            success=True,
+            moved_count=moved_count,
+            message=f"Moved {moved_count} active books to 'Active Reading' shelf"
+        ), 200
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        db.session.rollback()
+        return jsonify(success=False, error=str(e)), 500
+
+
+
 # ============================================
 # STEP 1: Get User's Country from IP
 # ============================================
@@ -792,6 +932,16 @@ def get_user_location():
 # logout session
 @app.route("/logout")
 def logout():
+
+    # Remove active session
+    if "session_id" in session:
+        active_session = ActiveSession.query.filter_by(
+            session_id=session["session_id"]
+        ).first()
+        if active_session:
+            db.session.delete(active_session)
+            db.session.commit()
+
     # Track session time before logging out
     if "user_id" in session and "login_time" in session:
         try:
@@ -807,6 +957,120 @@ def logout():
     
     session.clear()  # 🔥 clears user_id, username, everything
     return redirect("/")  # go back to landing page
+
+
+@app.route("/api/heartbeat", methods=["POST"])
+@login_required
+def heartbeat():
+    """Update session heartbeat - called periodically from frontend"""
+    try:
+        session_id = session.get("session_id")
+        
+        if not session_id:
+            return jsonify(success=False, error="No session found"), 401
+        
+        # Update the heartbeat
+        active_session = ActiveSession.query.filter_by(
+            session_id=session_id
+        ).first()
+        
+        if active_session:
+            active_session.last_heartbeat = datetime.utcnow()
+            db.session.commit()
+            
+            # Return active user count
+            active_count = get_active_user_count()
+            return jsonify(
+                success=True,
+                active_users=active_count
+            ), 200
+        
+        return jsonify(success=False, error="Session not found"), 404
+    
+    except Exception as e:
+        print(f"Heartbeat error: {e}")
+        return jsonify(success=False, error=str(e)), 500
+
+
+
+
+
+
+def get_active_user_count(timeout_minutes=15):
+    """
+    Get count of currently active users
+    Users are active if they've had a heartbeat in the last 15 minutes
+    """
+    try:
+        cutoff_time = datetime.utcnow() - timedelta(minutes=timeout_minutes)
+        
+        active_sessions = ActiveSession.query.filter(
+            ActiveSession.last_heartbeat >= cutoff_time
+        ).all()
+        
+        # Count unique users (a user might have multiple sessions)
+        active_user_ids = set(session.user_id for session in active_sessions)
+        
+        return len(active_user_ids)
+    except Exception as e:
+        print(f"Error getting active user count: {e}")
+        return 0
+
+
+
+@app.route("/api/active-users", methods=["GET"])
+def get_active_users_api():
+    """Get current active user count"""
+    try:
+        active_count = get_active_user_count()
+        total_users = User.query.count()
+        
+        return jsonify(
+            success=True,
+            active_users=active_count,
+            total_users=total_users,
+            online_percentage=round((active_count / total_users * 100) if total_users > 0 else 0, 1)
+        ), 200
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify(success=False, error=str(e)), 500
+
+
+
+def cleanup_inactive_sessions():
+    """Remove inactive sessions older than 30 minutes"""
+    with app.app_context():
+        try:
+            cutoff_time = datetime.utcnow() - timedelta(minutes=30)
+            
+            old_sessions = ActiveSession.query.filter(
+                ActiveSession.last_heartbeat < cutoff_time
+            ).all()
+            
+            deleted_count = len(old_sessions)
+            
+            for session_obj in old_sessions:
+                db.session.delete(session_obj)
+            
+            db.session.commit()
+            print(f"✅ Cleaned up {deleted_count} inactive sessions")
+            
+        except Exception as e:
+            print(f"❌ Error cleaning up sessions: {e}")
+            db.session.rollback()
+
+# Add to your scheduler
+scheduler.add_job(
+    func=cleanup_inactive_sessions,
+    trigger=CronTrigger(minute=0),  # Every hour
+    id='cleanup_sessions',
+    replace_existing=True
+)
+
+
+
+
 
 # API endpoint to track time in real-time
 @app.route("/api/track-time", methods=["POST"])
@@ -2897,6 +3161,13 @@ def check_monthly_report_status():
 
 
 # Add these functions to app.py
+ses_client = boto3.client(
+    'ses',
+    region_name=os.getenv('AWS_SES_REGION', 'us-east-1'),
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
+)
+
 
 def send_monthly_report_email(user, report_data):
     """Send monthly report email to user"""
@@ -3099,21 +3370,241 @@ def track_report_view():
     except Exception as e:
         return jsonify(success=False, error=str(e)), 500
 
+# Add these routes to your existing app.py
+
+# Add these routes to your existing app.py
+# Add these routes to your existing app.py
+
+@app.route('/shelf-view')
+@login_required
+def shelf_view():
+    """Render the interactive bookshelf view page"""
+    user_id = session.get('user_id')
+    user = db.session.get(User, user_id)
+    is_premium, days_left = get_user_premium_status(user_id)
+    
+    if not user:
+        return redirect('/signin')
+    
+    return render_template('shelfmode.html', user=user, is_premium=is_premium, days_left=days_left)
 
 
+@app.route('/api/shelf-data')
+@login_required
+def get_shelf_data():
+    """API endpoint to get all books organized by status for the shelf view"""
+    try:
+        user_id = session.get('user_id')
+        user = db.session.get(User, user_id)
+        
+        if not user:
+            return jsonify(success=False, error="User not found"), 404
+        
+        print(f"📚 Getting shelf data for user: {user.name} (ID: {user.id}, Email: {user.email})")
+        
+        # Query shelves using user EMAIL (as stored in database)
+        shelves = Shelf.query.filter_by(user_id=user.email).all()
+        
+        print(f"✅ Found {len(shelves)} shelves")
+        
+        # Collect all books and organize by status
+        completed_books = []
+        active_books = []
+        future_books = []
+        
+        for shelf in shelves:
+            print(f"  📖 Shelf: {shelf.shelf_name} ({len(shelf.books)} books)")
+            
+            for book in shelf.books:
+                book_data = {
+                    'id': book.id,
+                    'title': book.book_name,
+                    'author': 'Unknown',
+                    'shelfName': shelf.shelf_name,
+                    'totalPages': book.total_pages or 0,
+                    'currentPage': book.current_page or 0,
+                }
+                
+                # Determine book status and categorize
+                if book.status == 'active':
+                    if book.total_pages and book.total_pages > 0:
+                        progress = int((book.current_page or 0) / book.total_pages * 100)
+                    else:
+                        progress = 0
+                    
+                    book_data['progress'] = progress
+                    active_books.append(book_data)
+                    print(f"    ✅ Active: {book.book_name} ({progress}%)")
+                
+                elif book.status == 'completed' or (book.total_pages and book.current_page and book.current_page >= book.total_pages):
+                    colors = [
+                        '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
+                        '#1abc9c', '#e67e22', '#34495e', '#d35400', '#c0392b',
+                        '#16a085', '#8e44ad', '#2980b9',
+                    ]
+                    
+                    color = colors[book.id % len(colors)]
+                    book_data['color'] = color
+                    completed_books.append(book_data)
+                    print(f"    ✅ Completed: {book.book_name}")
+                
+                else:
+                    future_books.append(book_data)
+                    print(f"    ⏳ Future: {book.book_name}")
+        
+        completed_books.sort(key=lambda x: x['id'])
+        active_books.sort(key=lambda x: x['id'])
+        future_books.sort(key=lambda x: x['id'])
+        
+        print(f"\n📊 Summary: {len(completed_books)} completed, {len(active_books)} active, {len(future_books)} future")
+        
+        return jsonify(
+            success=True,
+            data={
+                'completed': completed_books,
+                'active': active_books,
+                'future': future_books,
+                'stats': {
+                    'completedCount': len(completed_books),
+                    'activeCount': len(active_books),
+                    'futureCount': len(future_books),
+                    'totalBooks': len(completed_books) + len(active_books) + len(future_books)
+                }
+            }
+        ), 200
+    
+    except Exception as e:
+        print(f"❌ Error in get_shelf_data: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify(success=False, error=str(e)), 500
 
 
+@app.route('/api/book/<int:book_id>/details')
+@login_required
+def get_book_details(book_id):
+    """Get detailed information about a specific book"""
+    try:
+        user_id = session.get('user_id')
+        user = db.session.get(User, user_id)
+        book = db.session.get(Book, book_id)
+        
+        if not book:
+            return jsonify(success=False, error="Book not found"), 404
+        
+        # Verify user owns this book (through shelf)
+        shelf = db.session.get(Shelf, book.shelf_id)
+        if not shelf or str(shelf.user_id) != str(user.email):
+            return jsonify(success=False, error="Not authorized"), 403
+        
+        # Calculate reading statistics
+        total_pages = book.total_pages or 0
+        current_page = book.current_page or 0
+        progress = int((current_page / total_pages * 100)) if total_pages > 0 else 0
+        
+        days_left = 0
+        if book.target_date:
+            days_left = (book.target_date - date.today()).days
+        
+        pages_left = max(total_pages - current_page, 0)
+        pages_per_day = 0
+        if days_left > 0:
+            pages_per_day = int(pages_left / days_left)
+        
+        return jsonify(
+            success=True,
+            book={
+                'id': book.id,
+                'title': book.book_name,
+                'shelfName': shelf.shelf_name,
+                'totalPages': total_pages,
+                'currentPage': current_page,
+                'progress': progress,
+                'status': book.status,
+                'startDate': book.start_date.isoformat() if book.start_date else None,
+                'targetDate': book.target_date.isoformat() if book.target_date else None,
+                'daysLeft': days_left,
+                'pagesLeft': pages_left,
+                'pagesPerDay': pages_per_day,
+                'intention': book.intention,
+                'externalLink': book.external_link,
+            }
+        ), 200
+    
+    except Exception as e:
+        print(f"Error in get_book_details: {e}")
+        return jsonify(success=False, error=str(e)), 500
 
 
+@app.route('/api/book/<int:book_id>/move-to-active', methods=['POST'])
+@login_required
+def move_book_to_active(book_id):
+    """Move a book from future/completed to active reading"""
+    try:
+        user_id = session.get('user_id')
+        user = db.session.get(User, user_id)
+        book = db.session.get(Book, book_id)
+        
+        if not book:
+            return jsonify(success=False, error="Book not found"), 404
+        
+        # Verify ownership - use email
+        shelf = db.session.get(Shelf, book.shelf_id)
+        if not shelf or str(shelf.user_id) != str(user.email):
+            return jsonify(success=False, error="Not authorized"), 403
+        
+        # Update book status
+        book.status = 'active'
+        if not book.start_date:
+            book.start_date = date.today()
+        
+        db.session.commit()
+        
+        return jsonify(success=True, message="Book moved to active reading"), 200
+    
+    except Exception as e:
+        print(f"Error moving book to active: {e}")
+        db.session.rollback()
+        return jsonify(success=False, error=str(e)), 500
 
 
-
-
-
-
-
-
-
+@app.route('/api/book/<int:book_id>/update-progress', methods=['POST'])
+@login_required
+def update_book_progress(book_id):
+    """Update reading progress for a book"""
+    try:
+        user_id = session.get('user_id')
+        user = db.session.get(User, user_id)
+        book = db.session.get(Book, book_id)
+        
+        if not book:
+            return jsonify(success=False, error="Book not found"), 404
+        
+        # Verify ownership - use email
+        shelf = db.session.get(Shelf, book.shelf_id)
+        if not shelf or str(shelf.user_id) != str(user.email):
+            return jsonify(success=False, error="Not authorized"), 403
+        
+        data = request.get_json()
+        new_page = data.get('currentPage')
+        
+        if new_page is None:
+            return jsonify(success=False, error="Missing currentPage"), 400
+        
+        book.current_page = int(new_page)
+        
+        # Auto-mark as completed if reached end
+        if book.total_pages and book.current_page >= book.total_pages:
+            book.status = 'completed'
+        
+        db.session.commit()
+        
+        return jsonify(success=True, message="Progress updated"), 200
+    
+    except Exception as e:
+        print(f"Error updating progress: {e}")
+        db.session.rollback()
+        return jsonify(success=False, error=str(e)), 500
 
 
 

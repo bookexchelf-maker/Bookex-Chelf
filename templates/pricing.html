@@ -4,6 +4,15 @@
 <html>
 <head>
     <title>Upgrade to Premium</title>
+    <div style="position: fixed; bottom: 20px; right: 20px; background: white; border-radius: 12px; padding: 15px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 10px; height: 10px; background: #4caf50; border-radius: 50%;"></div>
+            <div>
+            <div style="font-size: 14px; font-weight: bold; color: #333;" id="floatingActiveUsers">--</div>
+            <div style="font-size: 11px; color: #999;">people reading</div>
+            </div>
+        </div>
+    </div>
     <style>
         .pricing-container {
             max-width: 1000px;
@@ -238,6 +247,25 @@
 
         // Load pricing when page loads
         window.addEventListener('DOMContentLoaded', loadPricing);
+
+
+
+        // Same heartbeat and loading functions
+document.addEventListener('DOMContentLoaded', function() {
+  loadActiveUserCount();
+  setInterval(() => { loadActiveUserCount(); }, 15 * 1000);
+});
+
+function loadActiveUserCount() {
+  fetch('/api/active-users')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const el = document.getElementById('floatingActiveUsers');
+        if (el) el.textContent = data.active_users;
+      }
+    });
+}
         </script>
     </div>
 </body>

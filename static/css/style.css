@@ -1712,3 +1712,51 @@ body {
     font-size: 12px;
     color: #999;
   }
+
+
+
+
+
+
+
+
+
+  /* Shelf View Button Styling */
+.shelf-view-button-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.shelf-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 40px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1em;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    cursor: pointer;
+}
+
+.shelf-view-btn:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.shelf-view-btn:active {
+    transform: translateY(-2px);
+}
+
+.btn-icon {
+    font-size: 1.3em;
+}
+
+.btn-text {
+    letter-spacing: 0.5px;
+}

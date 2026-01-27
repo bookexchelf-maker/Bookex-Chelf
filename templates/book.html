@@ -144,6 +144,15 @@
   <!-- NAVBAR -->
   <header class="navbar">
     <button class="back-btn" onclick="goBack()" aria-label="Go back">←</button>
+    <div style="position: fixed; bottom: 20px; right: 20px; background: white; border-radius: 12px; padding: 15px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <div style="width: 10px; height: 10px; background: #4caf50; border-radius: 50%;"></div>
+    <div>
+      <div style="font-size: 14px; font-weight: bold; color: #333;" id="floatingActiveUsers">--</div>
+      <div style="font-size: 11px; color: #999;">people reading</div>
+    </div>
+  </div>
+</div>
     <div class="logo">
       <img src="{{ url_for('static', filename='image/logo.png') }}" alt="BookExChelf" class="logo">
     </div>
@@ -375,6 +384,24 @@ window.addEventListener('load', function() {
     }, 5000);
   }
 });
+
+
+// Same heartbeat and loading functions
+document.addEventListener('DOMContentLoaded', function() {
+  loadActiveUserCount();
+  setInterval(() => { loadActiveUserCount(); }, 15 * 1000);
+});
+
+function loadActiveUserCount() {
+  fetch('/api/active-users')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const el = document.getElementById('floatingActiveUsers');
+        if (el) el.textContent = data.active_users;
+      }
+    });
+}
 </script>
 </body>
 </html>

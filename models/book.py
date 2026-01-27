@@ -291,6 +291,75 @@ class EmailVerificationOTP(db.Model):
 
 
 
+#-------------------------------------------------------------------------------------------
+#
+#MONTHLY REPORT 
+#
+#----------------------------------------------------------------------------------------
+
+
+
+ 
+class MonthlyReportSent(db.Model):
+    """Track when monthly reports are sent to users"""
+    __tablename__ = 'monthly_report_sent'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    report_type = db.Column(db.String(50), nullable=False)  # 'first_month', 'premium_expiring', etc.
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    viewed_at = db.Column(db.DateTime, nullable=True)
+    converted_to_premium = db.Column(db.Boolean, default=False)
+    
+    user = db.relationship('User', backref='monthly_reports')
+    
+    def __repr__(self):
+        return f'<MonthlyReport User:{self.user_id} Type:{self.report_type}>'
+
+
+
+
+
+from datetime import datetime, timedelta
+
+class ActiveSession(db.Model):
+    """Track currently active users"""
+    __tablename__ = 'active_sessions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    session_id = db.Column(db.String(255), unique=True, nullable=False)
+    last_heartbeat = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='active_sessions')
+    
+    def is_active(self, timeout_minutes=15):
+        """Check if session is still active (not timed out)"""
+        time_since_heartbeat = (datetime.utcnow() - self.last_heartbeat).total_seconds() / 60
+        return time_since_heartbeat < timeout_minutes
+    
+    def __repr__(self):
+        return f'<ActiveSession User:{self.user_id} Created:{self.created_at}>'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

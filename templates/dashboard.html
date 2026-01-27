@@ -19,6 +19,16 @@
     <div class="logo">
       <img src="{{ url_for('static', filename='image/logo.png') }}" alt="BookExChelf" class = "logo">
     </div>
+<div style="position: fixed; bottom: 20px; right: 20px; background: white; border-radius: 12px; padding: 15px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <div style="width: 10px; height: 10px; background: #4caf50; border-radius: 50%;"></div>
+    <div>
+      <div style="font-size: 14px; font-weight: bold; color: #333;" id="floatingActiveUsers">--</div>
+      <div style="font-size: 11px; color: #999;">people reading</div>
+    </div>
+  </div>
+</div>
+
     <div class="auth-buttons">
       <a href="/logout" class="btn ghost">Log Out</a>
       <a href="/profile" class="btn primary profile-btn" title="{{ session.get('user_name', 'Profile') }}">
@@ -324,7 +334,7 @@
     </div>
     
     <!-- Active Reading -->
-    <div style="text-align: center; padding: 15px; background: #e3f2fd; border-radius: 8px; border: 2px solid #2196f3;">
+    <div style="text-align: center; padding: 15px; background: #e3f2fd; border-radius: 8px; border: 2px solid #2196f3;" >
       <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
         <div style="width: 16px; height: 16px; background: #2196f3; border-radius: 50%;"></div>
         <span style="font-size: 14px; color: #1565c0; font-weight: 600;">Active Reading</span>
@@ -373,6 +383,7 @@
   </div>
 </section>
 {% endif %}
+
 
 <!-- FOOTER -->
 <footer class="footer">
@@ -617,6 +628,90 @@ function checkMonthlyReportStatus() {
       }
     })
     .catch(error => console.error('Error checking report status:', error));
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Load active user count immediately
+  loadActiveUserCount();
+  
+  // Set up heartbeat - send every 5 minutes
+  setInterval(() => {
+    heartbeat();
+  }, 5 * 60 * 1000);
+  
+  // Also update active users display every 10 seconds
+  setInterval(() => {
+    loadActiveUserCount();
+  }, 10 * 1000);
+});
+
+function heartbeat() {
+  fetch('/api/heartbeat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log('✅ Heartbeat sent. Active users:', data.active_users);
+      updateActiveUserCount(data.active_users);
+    }
+  })
+  .catch(error => console.error('Heartbeat error:', error));
+}
+
+function loadActiveUserCount() {
+  fetch('/api/active-users', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      updateActiveUserCount(data.active_users);
+    }
+  })
+  .catch(error => console.error('Error loading active users:', error));
+}
+
+function updateActiveUserCount(count) {
+  const countElement = document.getElementById('activeUserCount');
+  if (countElement) {
+    countElement.textContent = count;
+    
+    // Add animation
+    countElement.style.transition = 'transform 0.3s ease';
+    countElement.style.transform = 'scale(1.1)';
+    setTimeout(() => {
+      countElement.style.transform = 'scale(1)';
+    }, 300);
+  }
+}
+
+
+
+
+
+// Same heartbeat and loading functions
+document.addEventListener('DOMContentLoaded', function() {
+  loadActiveUserCount();
+  setInterval(() => { loadActiveUserCount(); }, 15 * 1000);
+});
+
+function loadActiveUserCount() {
+  fetch('/api/active-users')
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const el = document.getElementById('floatingActiveUsers');
+        if (el) el.textContent = data.active_users;
+      }
+    });
 }
 </script>
 </body>

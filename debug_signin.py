@@ -1,31 +1,31 @@
-#!/usr/bin/env python
 from app import app, db
-from models.book import User
+from models.book import User, Shelf, Book
 
 with app.app_context():
-    # Try to query a user
-    try:
-        users = User.query.all()
-        print(f"Total users in database: {len(users)}")
+    # Get user by email
+    user = User.query.filter_by(email="balakishore5511@gmail.com").first()
+    
+    if user:
+        print(f"User: {user.name} (ID: {user.id})")
         
-        if users:
-            user = users[0]
-            print(f"\nFirst user: {user.email}")
-            print(f"User attributes:")
-            print(f"  - id: {user.id}")
-            print(f"  - name: {user.name}")
-            print(f"  - email: {user.email}")
-            print(f"  - is_premium: {user.is_premium if hasattr(user, 'is_premium') else 'NOT FOUND'}")
-            print(f"  - last_login: {user.last_login if hasattr(user, 'last_login') else 'NOT FOUND'}")
-            print(f"  - daily_time_spend: {user.daily_time_spend if hasattr(user, 'daily_time_spend') else 'NOT FOUND'}")
+        # Get shelves - try both user_id types
+        shelves_by_id = Shelf.query.filter_by(user_id=user.id).all()
+        shelves_by_email = Shelf.query.filter_by(user_id=user.email).all()
         
-        # Check if columns exist
-        from sqlalchemy import inspect
-        inspector = inspect(db.engine)
-        columns = [col['name'] for col in inspector.get_columns('user')]
-        print(f"\nUser table columns: {columns}")
+        print(f"\nShelves by user_id (integer): {len(shelves_by_id)}")
+        for shelf in shelves_by_id:
+            print(f"  - {shelf.shelf_name}: {len(shelf.books)} books")
+            for book in shelf.books:
+                print(f"      • {book.book_name}")
         
-    except Exception as e:
-        print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"\nShelves by user_id (email): {len(shelves_by_email)}")
+        for shelf in shelves_by_email:
+            print(f"  - {shelf.shelf_name}: {len(shelf.books)} books")
+            for book in shelf.books:
+                print(f"      • {book.book_name}")
+        
+        # Get ALL books in database
+        all_books = Book.query.all()
+        print(f"\nTotal books in database: {len(all_books)}")
+    else:
+        print("User not found")
