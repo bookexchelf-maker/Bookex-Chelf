@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bookex Chelf</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- Chart.js for reading statistics -->
@@ -632,8 +633,8 @@ function checkMonthlyReportStatus() {
 
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Load active user count immediately
-  loadActiveUserCount();
+  // Send heartbeat immediately on page load
+  heartbeat();
   
   // Set up heartbeat - send every 5 minutes
   setInterval(() => {
@@ -680,7 +681,7 @@ function loadActiveUserCount() {
 }
 
 function updateActiveUserCount(count) {
-  const countElement = document.getElementById('activeUserCount');
+  const countElement = document.getElementById('floatingActiveUsers');
   if (countElement) {
     countElement.textContent = count;
     
@@ -696,23 +697,6 @@ function updateActiveUserCount(count) {
 
 
 
-
-// Same heartbeat and loading functions
-document.addEventListener('DOMContentLoaded', function() {
-  loadActiveUserCount();
-  setInterval(() => { loadActiveUserCount(); }, 15 * 1000);
-});
-
-function loadActiveUserCount() {
-  fetch('/api/active-users')
-    .then(r => r.json())
-    .then(data => {
-      if (data.success) {
-        const el = document.getElementById('floatingActiveUsers');
-        if (el) el.textContent = data.active_users;
-      }
-    });
-}
 </script>
 </body>
 

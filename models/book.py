@@ -329,8 +329,8 @@ class ActiveSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     session_id = db.Column(db.String(255), unique=True, nullable=False)
-    last_heartbeat = db.Column(db.DateTime, default=datetime.utcnow)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_heartbeat = db.Column(db.DateTime, default=lambda: datetime.utcnow())
+    created_at = db.Column(db.DateTime, default=lambda: datetime.utcnow())
     
     user = db.relationship('User', backref='active_sessions')
     

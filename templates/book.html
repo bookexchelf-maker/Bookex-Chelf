@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ book.book_name }} - Bookex Chelf</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
@@ -49,6 +50,38 @@
         border-radius: 6px;
         transition: all 0.3s;
       }
+
+            /* Mobile Responsive Premium Features */
+      @media (max-width: 768px) {
+        .premium-lock-badge {
+          padding: 4px 10px;
+          font-size: 11px;
+          margin-left: 0;
+          margin-top: 5px;
+        }
+        
+        .premium-message {
+          padding: 12px;
+          font-size: 12px;
+          margin-top: 8px;
+        }
+        
+        .premium-message a {
+          font-size: 12px;
+          padding: 4px 8px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .premium-lock-badge {
+          display: block;
+          width: 100%;
+          text-align: center;
+          padding: 5px;
+        }
+      }
+
+
 
       .premium-message a:hover {
         background: #667eea;
@@ -137,6 +170,26 @@
       .link-info a:hover {
         color: #764ba2;
       }
+
+      @media (max-width: 768px) {
+        .book-form-container {
+          padding: 15px;
+        }
+        
+        .book-form {
+          padding: 15px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .book-form-container {
+          padding: 10px;
+        }
+        
+        .book-form {
+          padding: 10px;
+        }
+      }
     </style>
 </head>
 <body>
@@ -144,7 +197,7 @@
   <!-- NAVBAR -->
   <header class="navbar">
     <button class="back-btn" onclick="goBack()" aria-label="Go back">←</button>
-    <div style="position: fixed; bottom: 20px; right: 20px; background: white; border-radius: 12px; padding: 15px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+    <div style="position: fixed; bottom: 20px; right: 20px; background: white; border-radius: 12px; padding: 15px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;" class="floating-widget">
   <div style="display: flex; align-items: center; gap: 10px;">
     <div style="width: 10px; height: 10px; background: #4caf50; border-radius: 50%;"></div>
     <div>
@@ -386,11 +439,33 @@ window.addEventListener('load', function() {
 });
 
 
-// Same heartbeat and loading functions
+// Heartbeat and active user count functions
 document.addEventListener('DOMContentLoaded', function() {
+  // Send heartbeat for logged-in users
+  sendHeartbeat();
+  
+  // Load active user count
   loadActiveUserCount();
+  
+  // Refresh active user count every 15 seconds
   setInterval(() => { loadActiveUserCount(); }, 15 * 1000);
 });
+
+function sendHeartbeat() {
+  fetch('/api/heartbeat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log('Heartbeat sent. Active users:', data.active_users);
+    }
+  })
+  .catch(error => console.error('Heartbeat error:', error));
+}
 
 function loadActiveUserCount() {
   fetch('/api/active-users')

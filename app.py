@@ -279,14 +279,18 @@ def signin():
             user.reset_yearly_time_if_needed()
             
 
-            # ✅ Create active session
+            # ✅ Create active session with explicit timestamp
             session_id = str(uuid.uuid4())
             active_session = ActiveSession(
                 user_id=user.id,
-                session_id=session_id
+                session_id=session_id,
+                last_heartbeat=datetime.utcnow(),  # Explicitly set current time
+                created_at=datetime.utcnow()  # Explicitly set created time
             )
+            print(f"[DEBUG SIGNIN] Creating ActiveSession for user {user.id}: last_heartbeat={active_session.last_heartbeat}")
             db.session.add(active_session)
             db.session.commit()
+            print(f"[DEBUG SIGNIN] ActiveSession created successfully")
             
             session["user_id"] = user.id
             session["user_name"] = user.name
@@ -960,23 +964,33 @@ def logout():
 
 
 @app.route("/api/heartbeat", methods=["POST"])
-@login_required
 def heartbeat():
     """Update session heartbeat - called periodically from frontend"""
     try:
-        session_id = session.get("session_id")
+        # Check if user is logged in
+        if "session_id" not in session or "user_id" not in session:
+            print("[DEBUG] Heartbeat called but user not logged in - ignoring")
+            # Return active users count for non-logged-in users
+            active_count = get_active_user_count()
+            return jsonify(
+                success=True,
+                active_users=active_count
+            ), 200
         
-        if not session_id:
-            return jsonify(success=False, error="No session found"), 401
+        session_id = session.get("session_id")
+        print(f"[DEBUG] Heartbeat received for session: {session_id}")
         
         # Update the heartbeat
         active_session = ActiveSession.query.filter_by(
             session_id=session_id
         ).first()
         
+        print(f"[DEBUG] Found active session: {active_session}")
+        
         if active_session:
             active_session.last_heartbeat = datetime.utcnow()
             db.session.commit()
+            print(f"[DEBUG] Updated heartbeat for session {session_id} to {active_session.last_heartbeat}")
             
             # Return active user count
             active_count = get_active_user_count()
@@ -985,7 +999,13 @@ def heartbeat():
                 active_users=active_count
             ), 200
         
-        return jsonify(success=False, error="Session not found"), 404
+        print("[DEBUG] Session not found in database")
+        # Return current active users count even if this specific session wasn't found
+        active_count = get_active_user_count()
+        return jsonify(
+            success=True,
+            active_users=active_count
+        ), 200
     
     except Exception as e:
         print(f"Heartbeat error: {e}")
@@ -1003,17 +1023,31 @@ def get_active_user_count(timeout_minutes=15):
     """
     try:
         cutoff_time = datetime.utcnow() - timedelta(minutes=timeout_minutes)
+        print(f"[DEBUG] Cutoff time: {cutoff_time}, Current time: {datetime.utcnow()}")
+        
+        # Check all active sessions
+        all_sessions = ActiveSession.query.all()
+        print(f"[DEBUG] Total active sessions in DB: {len(all_sessions)}")
+        for s in all_sessions:
+            print(f"  - User {s.user_id}: last_heartbeat={s.last_heartbeat}, session_id={s.session_id}")
         
         active_sessions = ActiveSession.query.filter(
             ActiveSession.last_heartbeat >= cutoff_time
         ).all()
         
+        print(f"[DEBUG] Active sessions (within {timeout_minutes} min): {len(active_sessions)}")
+        for s in active_sessions:
+            print(f"  - User {s.user_id}: last_heartbeat={s.last_heartbeat}")
+        
         # Count unique users (a user might have multiple sessions)
         active_user_ids = set(session.user_id for session in active_sessions)
         
+        print(f"[DEBUG] Unique active users: {len(active_user_ids)}")
         return len(active_user_ids)
     except Exception as e:
         print(f"Error getting active user count: {e}")
+        import traceback
+        traceback.print_exc()
         return 0
 
 
@@ -1024,6 +1058,8 @@ def get_active_users_api():
     try:
         active_count = get_active_user_count()
         total_users = User.query.count()
+        
+        print(f"[DEBUG] Active users API called: active_count={active_count}, total_users={total_users}")
         
         return jsonify(
             success=True,
@@ -1796,6 +1832,16 @@ def book_page(book_id):
     # Get current user and check premium status
     user_id = session.get('user_id')
     user = db.session.get(User, user_id) if user_id else None
+    
+    # ✅ AUTHORIZATION CHECK - Verify user owns this book (through shelf)
+    # shelf.user_id stores the user ID (integer)
+    shelf = book.shelf if hasattr(book, 'shelf') and book.shelf else None
+    
+    if not user_id or not user or not shelf or int(shelf.user_id) != int(user_id):
+        print(f"❌ UNAUTHORIZED ACCESS ATTEMPT: User {user_id} tried to access book {book_id} from shelf owned by {shelf.user_id if shelf else 'None'}")
+        return redirect(url_for("dashboard"))
+    
+    print(f"✅ AUTHORIZED: User {user_id} accessing book {book_id}")
     is_premium, days_left = get_user_premium_status(user_id) if user_id else (False, 0)
     
     print(f"\n{'='*60}")
@@ -1908,7 +1954,18 @@ def start_reading(book_id):
     if "user_id" not in session:
         return redirect("/signin")
     
+    user_id = session.get('user_id')
+    user = db.session.get(User, user_id)
+    if not user:
+        return redirect("/signin")
+    
     book = Book.query.get_or_404(book_id)
+    
+    # ✅ AUTHORIZATION CHECK - Verify user owns this book (through shelf)
+    shelf = book.shelf if hasattr(book, 'shelf') and book.shelf else None
+    if not shelf or int(shelf.user_id) != int(user_id):
+        return redirect(url_for("dashboard"))
+    
     book.status = "active"
     db.session.commit()
     return redirect(request.referrer or url_for("dashboard"))
@@ -2145,7 +2202,18 @@ def stop_reading(book_id):
     if "user_id" not in session:
         return jsonify(success=False), 401
     
+    user_id = session.get('user_id')
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify(success=False), 401
+    
     book = Book.query.get_or_404(book_id)
+    
+    # ✅ AUTHORIZATION CHECK - Verify user owns this book (through shelf)
+    shelf = book.shelf if hasattr(book, 'shelf') and book.shelf else None
+    if not shelf or int(shelf.user_id) != int(user_id):
+        return jsonify(success=False, error="Unauthorized"), 403
+    
     book.status = "on_shelf"
     db.session.commit()
     return jsonify(success=True)
@@ -3494,7 +3562,7 @@ def get_book_details(book_id):
         
         # Verify user owns this book (through shelf)
         shelf = db.session.get(Shelf, book.shelf_id)
-        if not shelf or str(shelf.user_id) != str(user.email):
+        if not shelf or (str(shelf.user_id) != str(user_id) and str(shelf.user_id) != str(user.email)):
             return jsonify(success=False, error="Not authorized"), 403
         
         # Calculate reading statistics
@@ -3548,9 +3616,9 @@ def move_book_to_active(book_id):
         if not book:
             return jsonify(success=False, error="Book not found"), 404
         
-        # Verify ownership - use email
+        # Verify ownership
         shelf = db.session.get(Shelf, book.shelf_id)
-        if not shelf or str(shelf.user_id) != str(user.email):
+        if not shelf or (str(shelf.user_id) != str(user_id) and str(shelf.user_id) != str(user.email)):
             return jsonify(success=False, error="Not authorized"), 403
         
         # Update book status

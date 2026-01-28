@@ -262,6 +262,16 @@
 </head>
 <body>
 
+<div style="position: fixed; bottom: 20px; right: 20px; background: white; border-radius: 12px; padding: 15px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <div style="width: 10px; height: 10px; background: #4caf50; border-radius: 50%;"></div>
+    <div>
+      <div style="font-size: 14px; font-weight: bold; color: #333;" id="floatingActiveUsers">--</div>
+      <div style="font-size: 11px; color: #999;">people reading</div>
+    </div>
+  </div>
+</div>
+
 <div class="auth-container">
   <h2>Create your account</h2>
   <p>Start tracking and improving your reading habit</p>
@@ -771,6 +781,32 @@
       }
     }
   });
+
+  // ============================================
+  // Load Active User Count
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    loadActiveUserCount();
+    setInterval(() => { loadActiveUserCount(); }, 15 * 1000);
+  });
+
+  function loadActiveUserCount() {
+    fetch('/api/active-users')
+      .then(r => r.json())
+      .then(data => {
+        console.log('Active users response:', data);
+        if (data && data.success) {
+          const el = document.getElementById('floatingActiveUsers');
+          if (el) {
+            el.textContent = data.active_users;
+            console.log('Updated active users to:', data.active_users);
+          }
+        } else {
+          console.log('API returned success=false or no data');
+        }
+      })
+      .catch(error => console.error('Error loading active users:', error));
+  }
 </script>
 
 </body>

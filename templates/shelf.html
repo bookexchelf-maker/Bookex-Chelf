@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ shelf.shelf_name }} - Bookex Chelf</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -421,11 +422,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-// Same heartbeat and loading functions
+// Heartbeat and active user count functions
 document.addEventListener('DOMContentLoaded', function() {
+  // Send heartbeat for logged-in users
+  sendHeartbeat();
+  
+  // Load active user count
   loadActiveUserCount();
+  
+  // Refresh active user count every 15 seconds
   setInterval(() => { loadActiveUserCount(); }, 15 * 1000);
 });
+
+function sendHeartbeat() {
+  fetch('/api/heartbeat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log('Heartbeat sent. Active users:', data.active_users);
+    }
+  })
+  .catch(error => console.error('Heartbeat error:', error));
+}
 
 function loadActiveUserCount() {
   fetch('/api/active-users')
