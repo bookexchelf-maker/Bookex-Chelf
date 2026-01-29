@@ -1165,7 +1165,7 @@ def reading_statistics():
         user_id = session["user_id"]
         
         # Get all shelves for this user
-        shelves = Shelf.query.filter_by(user_id=user_id).all()
+        shelves = Shelf.query.filter(Shelf.user_id == str(user_id)).all()
         
         # Collect all books from user's shelves
         all_books = []
@@ -1480,10 +1480,11 @@ def dashboard():
             if not is_premium and len(shelves) >= 3:
                 error_message = "Free users can create up to 3 shelves. Upgrade to Premium for unlimited shelves!"
             else:
-                new_shelf = Shelf(shelf_name=shelf_name, user_id=user_id)
+                # Convert user_id to string to match VARCHAR column in database
+                new_shelf = Shelf(shelf_name=shelf_name, user_id=str(user_id))
                 db.session.add(new_shelf)
                 db.session.commit()
-                shelves = Shelf.query.filter_by(user_id=user_id).all()
+                shelves = Shelf.query.filter(Shelf.user_id == str(user_id)).all()
                 success_message = "Shelf created successfully!"
         return render_template("dashboard.html", 
                              shelves=shelves, 
@@ -1533,8 +1534,7 @@ def active_reading():
             # Check book limit for free users
             if not is_premium and total_books >= 12:
                 # Redirect back with error
-                shelves = Shelf.query.filter_by(user_id=user_id).all()
-                active_books = []
+                shelves = Shelf.query.filter(Shelf.user_id == str(user_id)).all()
                 for shelf in shelves:
                     active_books.extend([book for book in shelf.books if book.status == "active"])
                 
@@ -1572,9 +1572,10 @@ def active_reading():
                                      error="Free users can add up to 12 books. Upgrade to Premium for unlimited books!")
             
             try:
-                shelf = Shelf.query.filter_by(user_id=user_id).first()
+                shelf = Shelf.query.filter(Shelf.user_id == str(user_id)).first()
                 if not shelf:
-                    shelf = Shelf(shelf_name="Active Reading", user_id=user_id)
+                    # Convert user_id to string to match VARCHAR column in database
+                    shelf = Shelf(shelf_name="Active Reading", user_id=str(user_id))
                     db.session.add(shelf)
                     db.session.commit()
 
@@ -1589,7 +1590,7 @@ def active_reading():
         return redirect(url_for("active_reading"))
 
     # Get active books for this user
-    shelves = Shelf.query.filter_by(user_id=user_id).all()
+    shelves = Shelf.query.filter(Shelf.user_id == str(user_id)).all()
     active_books = []
     for shelf in shelves:
         active_books.extend([book for book in shelf.books if book.status == "active"])
@@ -3032,7 +3033,7 @@ def generate_monthly_report(user_id, user):
     """Generate comprehensive monthly reading report"""
     
     # Get all user's shelves and books
-    shelves = Shelf.query.filter_by(user_id=user_id).all()
+    shelves = Shelf.query.filter(Shelf.user_id == str(user_id)).all()
     all_books = []
     for shelf in shelves:
         all_books.extend(shelf.books)
@@ -3490,7 +3491,7 @@ def get_shelf_data():
         print(f"📚 Getting shelf data for user: {user.name} (ID: {user.id}, Email: {user.email})")
         
         # Query shelves using user EMAIL (as stored in database)
-        shelves = Shelf.query.filter_by(user_id=user.email).all()
+        shelves = Shelf.query.filter(Shelf.user_id == str(user.id)).all()
         
         print(f"✅ Found {len(shelves)} shelves")
         
