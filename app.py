@@ -67,7 +67,8 @@ if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
 
 
 
-db = SQLAlchemy(app)
+db.init_app(app)
+
 
 # ============ INITIALIZE SCHEDULER BREVO KEY ============
 
