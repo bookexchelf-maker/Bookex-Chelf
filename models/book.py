@@ -15,7 +15,7 @@ class Shelf(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     shelf_name = db.Column(db.String(100), nullable=False)
 
-    user_id = db.Column(db.String(150), db.ForeignKey("user.email"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     # Add relationship with cascade delete  
     books = db.relationship(

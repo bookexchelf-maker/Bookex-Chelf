@@ -1368,7 +1368,7 @@ def change_password():
 
 def calculate_reading_stats(user_id):
     """Calculate reading statistics from existing book data"""
-    # Get user to access email (since Shelf.user_id references User.email)
+    # Get user to access email (since Shelf.user_id references User.id)
     user = db.session.get(User, user_id)
     if not user:
         return {
@@ -1381,7 +1381,7 @@ def calculate_reading_stats(user_id):
             'incomplete_percentage': 0,
             'unread_count': 0
         }
-    all_books = Book.query.join(Shelf).filter(Shelf.user_id == user.email).all()
+    all_books = Book.query.join(Shelf).filter(Shelf.user_id == user_id).all()
     
     total_books = len(all_books)
     completed_books = [b for b in all_books if b.total_pages and b.current_page and b.current_page >= b.total_pages]
