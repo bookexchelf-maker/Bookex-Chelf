@@ -1,6 +1,6 @@
 from models.book import db, User, Shelf, Book, ReferralCode, Referral, EmailVerificationOTP, UserDailyProgress, ActiveSession
 
-
+from flask import Flask
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory, session
 from datetime import datetime, date, timedelta
 from werkzeug.utils import secure_filename
