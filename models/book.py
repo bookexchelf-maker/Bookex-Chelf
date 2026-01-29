@@ -5,9 +5,11 @@ from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm.attributes import flag_modified
 from datetime import date
 from datetime import datetime
+from extensions import db
 
 
-db = SQLAlchemy()
+
+
 
 class Shelf(db.Model):
     id = db.Column(db.Integer, primary_key=True)
