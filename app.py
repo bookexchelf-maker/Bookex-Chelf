@@ -1381,7 +1381,7 @@ def calculate_reading_stats(user_id):
             'incomplete_percentage': 0,
             'unread_count': 0
         }
-    all_books = Book.query.join(Shelf).filter(Shelf.user_id == user_id).all()
+    all_books = Book.query.join(Shelf).filter(Shelf.user_id == str(user_id)).all()
     
     total_books = len(all_books)
     completed_books = [b for b in all_books if b.total_pages and b.current_page and b.current_page >= b.total_pages]
@@ -1464,7 +1464,8 @@ def dashboard():
         user.today_ranking = user_rank
         db.session.commit()
     # Show only shelves belonging to this user
-    shelves = Shelf.query.filter_by(user_id=user_id).all()
+    # Cast user_id to string to match VARCHAR column in database
+    shelves = Shelf.query.filter(Shelf.user_id == str(user_id)).all()
     
     # Calculate reading statistics
     reading_stats = calculate_reading_stats(user_id) if user else {}
