@@ -4,6 +4,8 @@ from flask import Flask
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory, session
 from datetime import datetime, date, timedelta
 from werkzeug.utils import secure_filename
+from flask_sqlalchemy import SQLAlchemy
+
 from functools import wraps
 import os
 from config import Config
@@ -51,6 +53,22 @@ app.config.from_object(Config)
 app.secret_key = os.getenv("SECRET_KEY", "fallback-secret-key")  # Use fallback for development
 
 
+
+
+# Get Neon DB URL from Render Environment Variables
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+
+if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+
+
+
+db = SQLAlchemy(app)
+
 # ============ INITIALIZE SCHEDULER BREVO KEY ============
 
 BREVO_API_KEY = os.getenv('BREVO_API_KEY')
@@ -83,7 +101,6 @@ ses_client = boto3.client(
 # Initialize Flask-Mail
 mail = Mail(app)
 
-db.init_app(app)
 
 with app.app_context():
     db.create_all()
