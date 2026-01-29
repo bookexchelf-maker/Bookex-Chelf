@@ -30,8 +30,8 @@ ua-parser-builtins==202601
 urllib3==2.6.3
 user-agents==2.2.0
 waitress==3.0.2
-Werkzeug==3.1.5
 pg8000==1.31.0
+Werkzeug==3.1.5
 sib-api-v3-sdk
 boto3
 botocore
